@@ -7,7 +7,7 @@
 import os
 import subprocess
 import sys
-import json
+import re
 import mysql.connector
 import mysql.connector.errors as db_errors
 import psycopg2
@@ -117,15 +117,15 @@ class MySQLDb(Db):
         """)
 
     @classmethod
-    def append_commit():
+    def append_commit(cls):
         return cls.execute("INSERT INTO `revision`.`history` (alter_hash) VALUES ('%s')" % ref)
 
     @classmethod
     def remove_commit(cls, ref):
         return cls.execute("DELETE FROM `revision`.`history` WHERE alter_hash = '%s'" % ref)
 
-    @staticmethod
-    def get_commit_history(conn):
+    @classmethod
+    def get_commit_history(cls):
         return cls.execute("SELECT * FROM `revision`.`history`")
 
     @classmethod
@@ -198,24 +198,15 @@ class PostgresDb(Db):
             # returned.
             if cursor.rowcount > 0:
                 try:
-                    if fetchall:
-                        results = cursor.fetchall()
-                    else:
-                        results = cursor.fetchone()
+                    results = cursor.fetchall()
                 except psycopg2.ProgrammingError as e:
                     if str(e) != "no results to fetch":
-                        raise psycopg2.ProgrammingError(500, e.message)
+                        raise psycopg2.ProgrammingError(e.message)
             cls.conn.commit()
             return results
-        except psycopg2.ProgrammingError as e:
-            print query
-            print data
-            print e.message
-            raise errors.ProgrammingError(500, e.message)
-        except psycopg2.IntegrityError as e:
-            raise errors.IntegrityError(500, e.message)
-        except:
-            raise
+        except Exception, e:
+            sys.stderr.write("Psycopg2 execution error: %s\n" % e.message)
+            sys.exit(1)
 
     @classmethod
     def drop_revision(cls):
