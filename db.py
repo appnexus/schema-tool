@@ -249,7 +249,7 @@ class PostgresDb(Db):
     @classmethod
     def conn(cls):
         """
-        return the mysql connection handle to the configured server
+        return the postgres connection handle to the configured server
         """
         config = cls.config
         try:

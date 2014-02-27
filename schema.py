@@ -60,6 +60,7 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.j
 
 FILENAME_STANDARD = re.compile('^\d{12}-.+-(up|down)\.sql$')
 
+
 def main():
     """
     Determine what command is being called and dispatch it to the appropriate
@@ -345,6 +346,7 @@ def parse_ref(line):
     else:
         return None, 'none'
 
+
 def load_config():
     """
     Read the config file and return the values
@@ -407,6 +409,7 @@ class SimpleNode:
         else:
             sys.stderr.write("%s is not a valid alter-direction" % direction)
             return None
+
 
 # COMMAND CLASSES
 class Command(object):
@@ -1241,11 +1244,11 @@ class InitCommand(Command):
             elif config['type'] == 'mysql':
                 _DB = MySQLDb.init(config=config, force=options.force)
             else:
-                sys.stderr.write('Invalid database type in config.')
+                sys.stderr.write('Invalid database type in config. Only \'postgres\' and \'mysql\'
+                are allowed.')
                 sys.exit(1)
         else:
-            sys.stderr.write('No database type defined in config.')
-            sys.exit(1)
+            _DB = MySQLDb.init(config=config, force=options.force)
 
 # Start the script
 if __name__ == "__main__":
