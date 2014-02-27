@@ -2,7 +2,6 @@
     "username": "root",
     "password": "root",
     "host": "localhost",
-    "db": "revision",
-    "port": 3306,
+    "db": "tendril",
     "type": "postgres"
 }
