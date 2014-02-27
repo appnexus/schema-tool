@@ -13,9 +13,8 @@ import mysql.connector.errors as db_errors
 import psycopg2
 import psycopg2.extras
 
-"""
-- db connections -- commit and close
-"""
+# TODO: Move connection management to schema.py. Instatiate a connection
+# before each run() method and close it at the end, using the DB.conn() method.
 
 class Db(object):
     """
@@ -85,8 +84,8 @@ class MySQLDb(Db):
     @classmethod
     def init(cls, config, force=False):
         cls.config = config
-        conn = cls.conn()
-        cls.cursor = conn.cursor()
+        cls.conn = cls.conn()
+        cls.cursor = cls.conn.cursor()
         super(MySQLDb, cls).init(force)
 
     @classmethod
@@ -97,20 +96,20 @@ class MySQLDb(Db):
         except mysql.connector.Error, e:
             sys.stderr.write("Could not query DB: %s\n" % e.errmsglong)
             sys.exit(1)
-
+        cls.conn.commit()
         return cursor.fetchall()
 
     @classmethod
     def drop_revision(cls):
-        return cls.cursor.execute("DROP DATABASE IF EXISTS `revision`;")
+        return cls.execute("DROP DATABASE IF EXISTS `revision`;")
 
     @classmethod
     def create_revision(cls):
-        return cls.cursor.execute("""CREATE DATABASE IF NOT EXISTS `revision`;""")
+        return cls.execute("""CREATE DATABASE IF NOT EXISTS `revision`;""")
 
     @classmethod
     def create_history(cls):
-        return cls.cursor.execute("""CREATE TABLE IF NOT EXISTS `revision`.`history` (
+        return cls.execute("""CREATE TABLE IF NOT EXISTS `revision`.`history` (
         `id` int(11) unsigned not null primary key auto_increment,
         `alter_hash` varchar(100) not null,
         `ran_on` timestamp not null
@@ -171,8 +170,8 @@ class PostgresDb(Db):
     @classmethod
     def init(cls, config, force=False):
         cls.config = config
-        conn = cls.conn()
-        cls.cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cls.conn = cls.conn()
+        cls.cursor = cls.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         super(PostgresDb, cls).init(force)
 
     @classmethod
@@ -206,6 +205,7 @@ class PostgresDb(Db):
                 except psycopg2.ProgrammingError as e:
                     if str(e) != "no results to fetch":
                         raise psycopg2.ProgrammingError(500, e.message)
+            cls.conn.commit()
             return results
         except psycopg2.ProgrammingError as e:
             print query
