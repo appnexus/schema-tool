@@ -2,5 +2,7 @@
     "username": "root",
     "password": "root",
     "host": "localhost",
-    "port": 3306
+    "db": "revision",
+    "port": 3306,
+    "type": "postgres"
 }

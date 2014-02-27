@@ -35,13 +35,13 @@ from subprocess import PIPE
 from time import time
 from traceback import print_exc
 
-import mysql.connector
-import mysql.connector.errors as db_errors
-import psycopg2
+from db import MySQLDb, PostgresDb
 
 MAINTAINER = "John Murray <jmurray@appnexus.com>"
 
 ALTER_DIR = os.path.dirname(os.path.abspath(__file__)) + '/../'
+
+_DB = None
 
 COMMANDS = [
     {'command': 'new',      'handler': 'NewCommand'},
@@ -59,34 +59,6 @@ COMMANDS = [
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 
 FILENAME_STANDARD = re.compile('^\d{12}-.+-(up|down)\.sql$')
-
-def get_connection_string():
-    conn_conf = {
-            "DB_USER": "ncopty",
-            "DB_NAME": "kiwi",
-            "DB_SCHEMA": "kiwi",
-    }
-
-    conn_string_parts = []
-    conn_string_params = []
-    for key, value in conn_conf.iteritems():
-        # Build connection string based on what is defined in the config
-        if value:
-            if key == 'DB_HOST':
-                conn_string_parts.append('host=%s')
-                conn_string_params.append(value)
-            elif key == 'DB_USER':
-                conn_string_parts.append('user=%s')
-                conn_string_params.append(value)
-            elif key == 'DB_PASSWORD':
-                conn_string_parts.append('password=%s')
-                conn_string_params.append(value)
-            elif key == 'DB_NAME':
-                conn_string_parts.append('dbname=%s')
-                conn_string_params.append(value)
-
-    connection_string = ' '.join(conn_string_parts) % tuple(conn_string_params)
-    return connection_string
 
 def main():
     """
@@ -373,7 +345,6 @@ def parse_ref(line):
     else:
         return None, 'none'
 
-
 def load_config():
     """
     Read the config file and return the values
@@ -436,244 +407,6 @@ class SimpleNode:
         else:
             sys.stderr.write("%s is not a valid alter-direction" % direction)
             return None
-
-# MySQL
-# class Db(object):
-#     """
-#     Contains all the methods related to initialization of the environemnt that the
-#     script will be running in.
-#     """
-#     @staticmethod
-#     def init(conn, force=False):
-#         """
-#         Make sure that the table to track revisions is there.
-#         :type conn: mysql.connector.MySQLConnection
-#         """
-#         cursor = conn.cursor()
-
-#         if force:
-#             sys.stdout.write("Removing existing history")
-#             cursor.execute("DROP DATABASE IF EXISTS `revision`;")
-
-#         sys.stdout.write("Creating revision database\n")
-#         cursor.execute("""CREATE DATABASE IF NOT EXISTS `revision`;""")
-#         sys.stdout.write("Creating history table\n")
-#         cursor.execute("""CREATE TABLE IF NOT EXISTS `revision`.`history` (
-#                            `id` int(11) unsigned not null primary key auto_increment,
-#                            `alter_hash` varchar(100) not null,
-#                            `ran_on` timestamp not null
-#                          ) engine=InnoDB
-#                          """)
-#         sys.stdout.write("DB Initialized\n")
-
-#     @staticmethod
-#     def append_commit(conn, ref):
-#         cursor = conn.cursor()
-#         cursor.execute("INSERT INTO `revision`.`history` (alter_hash) VALUES ('%s')" % ref)
-#         conn.commit()
-
-#     @staticmethod
-#     def remove_commit(conn, ref):
-#         cursor = conn.cursor()
-#         cursor.execute("DELETE FROM `revision`.`history` WHERE alter_hash = '%s'" % ref)
-#         conn.commit()
-
-#     @staticmethod
-#     def get_commit_history(conn):
-#         try:
-#             cursor = conn.cursor()
-#             cursor.execute("SELECT * FROM `revision`.`history`")
-#         except mysql.connector.Error, e:
-#             sys.stderr.write("Could not query DB: %s\n" % e.errmsglong)
-#             sys.exit(1)
-
-#         return cursor.fetchall()
-
-#     @staticmethod
-#     def conn():
-#         """
-#         return the mysql connection handle to the configured server
-#         """
-#         config = load_config()
-#         try:
-#             conn = mysql.connector.Connect(user=config['username'],
-#                                            password=config['password'],
-#                                            host=config['host'],
-#                                            port=config['port'])
-#         except mysql.connector.InterfaceError, ex:
-#             sys.stderr.write("Unable to connect to mysql: %s\n" % ex)
-#             sys.stderr.write("Ensure that the server is running and you can connect normally\n")
-#             sys.exit(1)
-#         except mysql.connector.ProgrammingError, ex:
-#             sys.stderr.write("Could not connect to mysql: %s\n" % ex)
-#             sys.exit(1)
-#         except db_errors.DatabaseError, er:
-#             sys.stderr.write("Could not connect to mysql: %s, %s\n\n" % (er.errno, er.msg))
-#             if er.errno == -1 and re.compile('.*insecure.*').match(er.msg) is not None:
-#                 # print some instructions on connecting with new mode
-#                 sys.stderr.write("Your MySQL version may be running with old_password compatibility mode."
-#                                  "\nPlease check your CNF files and if necessary change the setting, restart,"
-#                                  "\nand create a new-user or update your existing users to use new auth.\n")
-#             sys.exit(1)
-
-#         return conn
-
-#     @staticmethod
-#     def run_up(alter, config, force=False, verbose=False):
-#         """
-#         Run the up-alter against the DB
-#         """
-#         sys.stdout.write("Running alter: %s\n" % alter.filename)
-#         filename = alter.abs_filename()
-#         Db._run_file(filename=filename, config=config, exit_on_error=not force, verbose=verbose)
-
-#         conn = Db.conn()
-#         Db.append_commit(conn=conn, ref=alter.id)
-
-#     @staticmethod
-#     def run_down(alter, config, force=False, verbose=False):
-#         """
-#         Run the down-alter against the DB
-#         """
-#         sys.stdout.write("Running alter: %s\n" % alter.down_filename())
-#         filename = alter.abs_filename(direction='down')
-#         Db._run_file(filename=filename, config=config, exit_on_error=not force, verbose=verbose)
-
-#         conn = Db.conn()
-#         Db.remove_commit(conn=conn, ref=alter.id)
-
-#     @staticmethod
-#     def _run_file(filename, config, exit_on_error=True, verbose=False):
-#         command = ['mysql',
-#                    '-h', config['host'],
-#                    '-u', config['username'],
-#                    '-p' + config['password']]
-#         proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-
-#         script  = open(filename)
-#         out, err = proc.communicate(script.read())
-
-#         if not proc.returncode == 0:
-#             sys.stderr.write("Error")
-#             if verbose:
-#                 sys.stderr.write("\n----------------------\n")
-#                 sys.stderr.write(out.rstrip())
-#                 sys.stderr.write(err.rstrip())
-#                 sys.stderr.write("\n----------------------\n")
-#             sys.stderr.write("\n")
-#             if exit_on_error:
-#                 sys.exit(1)
-
-class Db(object):
-    """
-    Contains all the methods related to initialization of the environemnt that the
-    script will be running in.
-    """
-    @staticmethod
-    def init(conn, force=False):
-        """
-        Make sure that the table to track revisions is there.
-        """
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        if force:
-            sys.stdout.write("Removing existing history")
-            cursor.execute("DROP DATABASE IF EXISTS revision")
-
-        sys.stdout.write("Creating revision database\n")
-        cursor.execute("CREATE DATABASE IF NOT EXISTS revision;")
-        sys.stdout.write("Creating history table\n")
-        cursor.execute("""CREATE TABLE IF NOT EXISTS revision.history (
-                           id serial NOT NULL,
-                           alter_hash VARCHAR(100) NOT NULL,
-                           ran_on timestamp NOT NULL DEFAULT current_timestamp,
-                           CONSTRAINT pk_history__id PRIMARY KEY (id)
-                         )""")
-        sys.stdout.write("DB Initialized\n")
-
-    @staticmethod
-    def append_commit(conn, ref):
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("INSERT INTO revision.history (alter_hash) VALUES (%s)", ref)
-        conn.commit()
-
-    @staticmethod
-    def remove_commit(conn, ref):
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("DELETE FROM revision.history WHERE alter_hash = %s", ref)
-        conn.commit()
-
-    @staticmethod
-    def get_commit_history(conn):
-        try:
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cursor.execute("SELECT * FROM revision.history")
-        except mysql.connector.Error, e:
-            sys.stderr.write("Could not query DB: %s\n" % e.errmsglong)
-            sys.exit(1)
-
-        return cursor.fetchall()
-
-    @staticmethod
-    def conn():
-        """
-        return the mysql connection handle to the configured server
-        """
-        config = load_config()
-        try:
-            conn = psycopg2.connect(get_connection_string())
-        except Exception, e:
-            sys.stderr.write("Unable to connect to psql: %s\n" % e.msg)
-            sys.stderr.write("Ensure that the server is running and you can connect normally\n")
-            sys.exit(1)
-
-        return conn
-
-    @staticmethod
-    def run_up(alter, config, force=False, verbose=False):
-        """
-        Run the up-alter against the DB
-        """
-        sys.stdout.write("Running alter: %s\n" % alter.filename)
-        filename = alter.abs_filename()
-        Db._run_file(filename=filename, config=config, exit_on_error=not force, verbose=verbose)
-
-        conn = Db.conn()
-        Db.append_commit(conn=conn, ref=alter.id)
-
-    @staticmethod
-    def run_down(alter, config, force=False, verbose=False):
-        """
-        Run the down-alter against the DB
-        """
-        sys.stdout.write("Running alter: %s\n" % alter.down_filename())
-        filename = alter.abs_filename(direction='down')
-        Db._run_file(filename=filename, config=config, exit_on_error=not force, verbose=verbose)
-
-        conn = Db.conn()
-        Db.remove_commit(conn=conn, ref=alter.id)
-
-    @staticmethod
-    def _run_file(filename, config, exit_on_error=True, verbose=False):
-        command = ['mysql',
-                   '-h', config['host'],
-                   '-u', config['username'],
-                   '-p' + config['password']]
-        proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-
-        script  = open(filename)
-        out, err = proc.communicate(script.read())
-
-        if not proc.returncode == 0:
-            sys.stderr.write("Error")
-            if verbose:
-                sys.stderr.write("\n----------------------\n")
-                sys.stderr.write(out.rstrip())
-                sys.stderr.write(err.rstrip())
-                sys.stderr.write("\n----------------------\n")
-            sys.stderr.write("\n")
-            if exit_on_error:
-                sys.exit(1)
 
 # COMMAND CLASSES
 class Command(object):
@@ -1194,11 +927,9 @@ class UpCommand(Command):
         (options, args) = self.parser.parse_args()
 
         CheckCommand().run(inline=True)
-        config = load_config()
 
         # get history
-        conn = Db.conn()
-        history = Db.get_commit_history(conn)
+        history = _DB.get_commit_history()
         history = sorted(history, key=lambda h: h[0])
 
         # get current alter-chain
@@ -1232,7 +963,7 @@ class UpCommand(Command):
                     if not options.force:
                         sys.exit(1)
                 alter = alters[0]
-                Db.run_down(alter)
+                _DB.run_down(alter)
 
         # do alters that are in the alter-chain and have not
         # ben run yet
@@ -1250,8 +981,7 @@ class UpCommand(Command):
                     i = (max - 1)
 
             i += 1
-            Db.run_up(alter=alter,
-                      config=config,
+            _DB.run_up(alter=alter,
                       force=options.force,
                       verbose=options.verbose)
 
@@ -1290,11 +1020,8 @@ class DownCommand(Command):
             self.parser.print_help()
             sys.exit(1)
 
-        config = load_config()
-        conn = Db.conn()
-
         # get current history
-        history = Db.get_commit_history(conn)
+        history = _DB.get_commit_history()
         history = sorted(history, key=lambda h: h[0], reverse=True)
 
         # get current alter-chain
@@ -1332,15 +1059,14 @@ class DownCommand(Command):
                 # error depending on the force and verbose flags (missing alter to run)
                 if options.force:
                     sys.stderr.write("Warning: missing alter: %s\n" % alter_id)
-                    Db.remove_commit(conn=Db.conn(), ref=alter_id)
+                    _DB.remove_commit(ref=alter_id)
                 else:
                     sys.stderr.write("error, missing alter: %s\n" % alter_id)
                     sys.exit(1)
 
         # run all the down-alters that we have collected
         for alter_to_run in down_alters_to_run:
-            Db.run_down(alter=alter_to_run,
-                        config=config,
+            _DB.run_down(alter=alter_to_run,
                         force=options.force,
                         verbose=options.verbose)
 
@@ -1507,9 +1233,19 @@ class InitCommand(Command):
         Initialize everything if this is the first time that the tool has been run
         """
         (options, args) = self.parser.parse_args()
-
-        Db.init(Db.conn(), force=options.force)
-
+        config = load_config()
+        if 'type' in config:
+            global _DB
+            if config['type'] == 'postgres':
+                _DB = PostgresDb.init(config=config, force=options.force)
+            elif config['type'] == 'mysql':
+                _DB = MySQLDb.init(config=config, force=options.force)
+            else:
+                sys.stderr.write('Invalid database type in config.')
+                sys.exit(1)
+        else:
+            sys.stderr.write('No database type defined in config.')
+            sys.exit(1)
 
 # Start the script
 if __name__ == "__main__":
