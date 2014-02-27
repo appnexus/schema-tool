@@ -11,6 +11,7 @@ import json
 import mysql.connector
 import mysql.connector.errors as db_errors
 import psycopg2
+import psycopg2.extras
 
 """
 - db connections -- commit and close
@@ -80,13 +81,13 @@ class Db(object):
             if exit_on_error:
                 sys.exit(1)
 
-class MySQLDb(object):
+class MySQLDb(Db):
     @classmethod
     def init(cls, config, force=False):
         cls.config = config
         conn = cls.conn()
         cls.cursor = conn.cursor()
-        super(Db, cls).init(force)
+        super(MySQLDb, cls).init(force)
 
     @classmethod
     def execute(cls, query):
@@ -166,13 +167,13 @@ class MySQLDb(object):
         my_env = None
         return cmd, my_env
 
-class PostgresDb(object):
+class PostgresDb(Db):
     @classmethod
     def init(cls, config, force=False):
         cls.config = config
         conn = cls.conn()
         cls.cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        super(Db, cls).init(force)
+        super(PostgresDb, cls).init(force)
 
     @classmethod
     def execute(cls, query, data=None):
@@ -218,11 +219,11 @@ class PostgresDb(object):
 
     @classmethod
     def drop_revision(cls):
-        return cls.execute("DROP DATABASE IF EXISTS revision")
+        return cls.execute("DROP SCHEMA IF EXISTS revision")
 
     @classmethod
     def create_revision(cls):
-        return cls.execute("CREATE DATABASE IF NOT EXISTS revision;")
+        return cls.execute("CREATE SCHEMA IF NOT EXISTS revision")
 
     @classmethod
     def create_history(cls):
@@ -273,7 +274,7 @@ class PostgresDb(object):
             conn_string = ' '.join(conn_string_parts) % tuple(conn_string_params)
             conn = psycopg2.connect(conn_string)
         except Exception, e:
-            sys.stderr.write("Unable to connect to psql: %s\n" % e.msg)
+            sys.stderr.write("Unable to connect to psql: %s\n" % e.message)
             sys.stderr.write("Ensure that the server is running and you can connect normally\n")
             sys.exit(1)
 
