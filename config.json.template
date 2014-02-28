@@ -1,9 +1,10 @@
 {
     "username": "root",
-    "password": "root", # no effect for postgres
+    "password": "root", # mysql only
     "host": "localhost",
-    "db_name": "tendril",
-    "schema_name": "revision", # postgres only
-    "table_name": "history",
+    "db_name": "tendril", # psql only
+    "revision_db_name": "revision", # mysql only
+    "revision_schema_name": "revision", # postgres only
+    "history_table_name": "history",
     "type": "postgres"
 }

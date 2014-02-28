@@ -84,7 +84,8 @@ class MySQLDb(Db):
         cls.config = config
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
-        cls.table_name = '`' + cls.config['db_name'] + '`.`' + cls.config['table_name'] + '`'
+        cls.full_table_name = '`%s`.`%s`' % (cls.config['revision_db_name'],
+                                             cls.config['history_table_name'])
         super(MySQLDb, cls).init(force)
 
     @classmethod
@@ -100,23 +101,25 @@ class MySQLDb(Db):
 
     @classmethod
     def drop_revision(cls):
-        return cls.execute('DROP TABLE IF EXISTS %s' % cls.table_name)
+        return cls.execute('DROP TABLE IF EXISTS %s' % cls.full_table_name)
 
     @classmethod
     def create_revision(cls):
-        return cls.execute('CREATE TABLE IF NOT EXISTS %s' % cls.table_name)
+        return cls.execute('CREATE TABLE IF NOT EXISTS %s' % cls.full_table_name)
 
     @classmethod
     def get_commit_history(cls):
-        return cls.execute('SELECT * FROM %s' % cls.table_name)
+        return cls.execute('SELECT * FROM %s' % cls.full_table_name)
 
     @classmethod
     def append_commit(cls, ref):
-        return cls.execute('INSERT INTO %s (alter_hash) VALUES (%s)' % (cls.table_name, '%s'), ref)
+        return cls.execute('INSERT INTO %s (alter_hash) VALUES (%s)' % (cls.full_table_name, '%s'),
+                           ref)
 
     @classmethod
     def remove_commit(cls, ref):
-        return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.table_name, '%s'), ref)
+        return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.full_table_name, '%s'),
+                           ref)
 
     @classmethod
     def create_history(cls):
@@ -125,7 +128,7 @@ class MySQLDb(Db):
         `alter_hash` varchar(100) not null,
         `ran_on` timestamp not null
         ) engine=InnoDB
-        """ % cls.table_name)
+        """ % cls.full_table_name)
 
     @classmethod
     def conn(cls):
@@ -161,7 +164,7 @@ class MySQLDb(Db):
         cmd = ['mysql',
                '-h', config['host'],
                '-u', config['username'],
-               '-p' + config['password']]
+               '-p %s' % config['password']]
         my_env = None
         return cmd, my_env
 
@@ -173,7 +176,11 @@ class PostgresDb(Db):
         cls.config = config
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cls.table_name = '"' + cls.config['schema_name'] + '"."' + cls.config['table_name'] + '"'
+        if 'revision_schema_name' in cls.config:
+            cls.full_table_name = '"%s"."%s"' % (cls.config['revision_schema_name'],
+                                                 cls.config['history_table_name'])
+        else:
+            cls.full_table_name = '"%s"' % cls.config['history_table_name']
         super(PostgresDb, cls).init(force)
 
     @classmethod
@@ -212,23 +219,25 @@ class PostgresDb(Db):
 
     @classmethod
     def drop_revision(cls):
-        return cls.execute('DROP SCHEMA IF EXISTS %s' % cls.table_name)
+        return cls.execute('DROP SCHEMA IF EXISTS %s' % cls.config['revision_schema_name'])
 
     @classmethod
     def create_revision(cls):
-        return cls.execute('CREATE SCHEMA IF NOT EXISTS %s' % cls.table_name)
+        return cls.execute('CREATE SCHEMA IF NOT EXISTS %s' % cls.config['revision_schema_name'])
 
     @classmethod
     def get_commit_history(cls):
-        return cls.execute('SELECT * FROM %s' % cls.table_name)
+        return cls.execute('SELECT * FROM %s' % cls.full_table_name)
 
     @classmethod
     def append_commit(cls, ref):
-        return cls.execute('INSERT INTO %s (alter_hash) VALUES (%s)' % (cls.table_name, '%s'), ref)
+        return cls.execute('INSERT INTO %s (alter_hash) VALUES (%s)' % (cls.full_table_name, '%s'),
+                           ref)
 
     @classmethod
     def remove_commit(cls, ref):
-        return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.table_name, '%s', ref))
+        return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.full_table_name, '%s',
+                                                                     ref))
 
     @classmethod
     def create_history(cls):
@@ -237,7 +246,7 @@ class PostgresDb(Db):
         alter_hash VARCHAR(100) NOT NULL,
         ran_on timestamp NOT NULL DEFAULT current_timestamp,
         CONSTRAINT pk_%s__id PRIMARY KEY (id)
-        )""" % (cls.table_name, cls.config['table_name']))
+        )""" % (cls.full_table_name, cls.config['history_table_name']))
 
     @classmethod
     def conn(cls):
