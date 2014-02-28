@@ -1228,7 +1228,7 @@ class InitCommand(Command):
         parser = OptionParser(usage=usage)
         parser.add_option('-f', '--force',
                           action='store_true', dest='force', default=False,
-                          help='Forceably init the table (whiping all old data)')
+                          help='Forcibly init the table (wiping all old data)')
         self.parser = parser
 
     def run(self):
@@ -1244,7 +1244,7 @@ class InitCommand(Command):
             elif config['type'] == 'mysql':
                 _DB = MySQLDb.init(config=config, force=options.force)
             else:
-                sys.stderr.write('Invalid database type in config. Only \'postgres\' and \'mysql\'
+                sys.stderr.write('Invalid database type in config. Only \'postgres\' and \'mysql\' \
                 are allowed.')
                 sys.exit(1)
         else:
