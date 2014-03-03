@@ -41,8 +41,6 @@ MAINTAINER = "John Murray <jmurray@appnexus.com>"
 
 ALTER_DIR = os.path.dirname(os.path.abspath(__file__)) + '/../'
 
-_DB = None
-
 COMMANDS = [
     {'command': 'new',      'handler': 'NewCommand'},
     {'command': 'check',    'handler': 'CheckCommand'},
@@ -361,7 +359,6 @@ def load_config():
     except IOError, ex:
         sys.stderr.write("Error reading config: %s\n" % ex.strerror)
         sys.exit(1)
-
     return config
 
 
@@ -1236,20 +1233,21 @@ class InitCommand(Command):
         Initialize everything if this is the first time that the tool has been run
         """
         (options, args) = self.parser.parse_args()
-        config = load_config()
-        if 'type' in config:
-            global _DB
-            if config['type'] == 'postgres':
-                _DB = PostgresDb.init(config=config, force=options.force)
-            elif config['type'] == 'mysql':
-                _DB = MySQLDb.init(config=config, force=options.force)
-            else:
-                sys.stderr.write('Invalid database type in config. Only \'postgres\' and \'mysql\' \
-                are allowed.')
-                sys.exit(1)
-        else:
-            _DB = MySQLDb.init(config=config, force=options.force)
+        _DB.init(force=options.force)
 
 # Start the script
 if __name__ == "__main__":
+    config = load_config()
+    global _DB
+    if 'type' in config:
+        if config['type'] == 'postgres':
+            _DB = PostgresDb.init_conn(config)
+        elif config['type'] == 'mysql':
+            _DB = MySQLDb.init_conn(config)
+        else:
+            sys.stderr.write('Invalid database type in config. Only \'postgres\' and \'mysql\' \
+            are allowed.')
+            sys.exit(1)
+    else:
+        _DB = MySQLDb.init_conn(config)
     main()

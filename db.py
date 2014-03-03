@@ -9,6 +9,11 @@ import subprocess
 import sys
 import re
 
+import psycopg2
+import psycopg2.extras
+import mysql.connector
+import mysql.connector.errors as db_errors
+
 # TODO: Move connection management to schema.py. Instantiate a connection
 # before each run() method and close it at the end, using the DB.conn() method.
 
@@ -34,27 +39,27 @@ class Db(object):
         cls.create_history()
         sys.stdout.write('DB Initialized\n')
 
-    @staticmethod
-    def run_up(alter, force=False, verbose=False):
+    @classmethod
+    def run_up(cls, alter, force=False, verbose=False):
         """
         Run the up-alter against the DB
         """
         sys.stdout.write('Running alter: %s\n' % alter.filename)
         filename = alter.abs_filename()
-        Db._run_file(filename=filename, exit_on_error=not force, verbose=verbose)
+        cls._run_file(filename=filename, exit_on_error=not force, verbose=verbose)
 
-        Db.append_commit(ref=alter.id)
+        cls.append_commit(ref=alter.id)
 
-    @staticmethod
-    def run_down(alter, force=False, verbose=False):
+    @classmethod
+    def run_down(cls, alter, force=False, verbose=False):
         """
         Run the down-alter against the DB
         """
         sys.stdout.write('Running alter: %s\n' % alter.down_filename())
         filename = alter.abs_filename(direction='down')
-        Db._run_file(filename=filename, exit_on_error=not force, verbose=verbose)
+        cls._run_file(filename=filename, exit_on_error=not force, verbose=verbose)
 
-        Db.remove_commit(ref=alter.id)
+        cls.remove_commit(ref=alter.id)
 
     @classmethod
     def _run_file(cls, filename, exit_on_error=True, verbose=False):
@@ -82,15 +87,13 @@ class Db(object):
 
 class MySQLDb(Db):
     @classmethod
-    def init(cls, config, force=False):
-        import mysql.connector
-        import mysql.connector.errors as db_errors
+    def init_conn(cls, config):
         cls.config = config
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
         cls.full_table_name = '`%s`.`%s`' % (cls.config['revision_db_name'],
                                              cls.config['history_table_name'])
-        super(MySQLDb, cls).init(force)
+        return cls
 
     @classmethod
     def execute(cls, query, data):
@@ -174,12 +177,10 @@ class MySQLDb(Db):
 
 class PostgresDb(Db):
     @classmethod
-    def init(cls, config, force=False):
-        import psycopg2
-        import psycopg2.extras
+    def init_conn(cls, config):
         cls.config = config
         cls.conn = cls.conn()
-        cls.cursor = cls.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cls.cursor = cls.conn.cursor()
         if 'revision_schema_name' in cls.config:
             cls.full_table_name = '"%s"."%s"' % (cls.config['revision_schema_name'],
                                                  cls.config['history_table_name'])
@@ -187,7 +188,7 @@ class PostgresDb(Db):
             sys.stderr.write('No schema found in config file. Please add one with the key: '
                              'revision_schema_name')
             sys.exit(1)
-        super(PostgresDb, cls).init(force)
+        return cls
 
     @classmethod
     def execute(cls, query, data=None):
@@ -197,7 +198,7 @@ class PostgresDb(Db):
                 cursor.execute(query, data)
             else:
                 cursor.execute(query)
-            results = None
+            results = []
             # If rowcount == 0, just return None.
             #
             # Note from psycopg2 docs:
@@ -220,7 +221,8 @@ class PostgresDb(Db):
             cls.conn.commit()
             return results
         except Exception, e:
-            sys.stderr.write('Psycopg2 execution error: %s\n' % e.message)
+            sys.stderr.write('Psycopg2 execution error: %s\n. Query: %s - Data: %s\n.'
+                             % (e.message, query, str(data)))
             sys.exit(1)
 
     @classmethod
@@ -238,12 +240,12 @@ class PostgresDb(Db):
     @classmethod
     def append_commit(cls, ref):
         return cls.execute('INSERT INTO %s (alter_hash) VALUES (%s)' % (cls.full_table_name, '%s'),
-                           ref)
+                           (ref,))
 
     @classmethod
     def remove_commit(cls, ref):
         return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.full_table_name, '%s'),
-                           ref)
+                           (ref,))
 
     @classmethod
     def create_history(cls):
@@ -294,6 +296,7 @@ class PostgresDb(Db):
                '-h', cls.config['host'],
                '-U', cls.config['username'],
                cls.config['db_name']]
+        my_env = None
         if 'password' in cls.config:
             my_env = os.environ.copy()
             my_env['PGPASSWORD'] = cls.config['password']
