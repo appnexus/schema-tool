@@ -59,7 +59,11 @@ class Db(object):
     @classmethod
     def _run_file(cls, filename, exit_on_error=True, verbose=False):
         command, my_env = cls.run_file_cmd()
-        proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, env=my_env)
+        proc = subprocess.Popen(command,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=my_env)
 
         script = open(filename)
         out, err = proc.communicate(script.read())
@@ -101,11 +105,11 @@ class MySQLDb(Db):
 
     @classmethod
     def drop_revision(cls):
-        return cls.execute('DROP TABLE IF EXISTS %s' % cls.full_table_name)
+        return cls.execute('DROP DATABASE IF EXISTS %s' % cls.full_table_name)
 
     @classmethod
     def create_revision(cls):
-        return cls.execute('CREATE TABLE IF NOT EXISTS %s' % cls.full_table_name)
+        return cls.execute('CREATE DATABASE IF NOT EXISTS %s' % cls.full_table_name)
 
     @classmethod
     def get_commit_history(cls):
@@ -164,7 +168,7 @@ class MySQLDb(Db):
         cmd = ['mysql',
                '-h', config['host'],
                '-u', config['username'],
-               '-p %s' % config['password']]
+               '-p', config['password']]
         my_env = None
         return cmd, my_env
 
@@ -180,7 +184,9 @@ class PostgresDb(Db):
             cls.full_table_name = '"%s"."%s"' % (cls.config['revision_schema_name'],
                                                  cls.config['history_table_name'])
         else:
-            cls.full_table_name = '"%s"' % cls.config['history_table_name']
+            sys.stderr.write('No schema found in config file. Please add one with the key: '
+                             'revision_schema_name')
+            sys.exit(1)
         super(PostgresDb, cls).init(force)
 
     @classmethod
@@ -236,8 +242,8 @@ class PostgresDb(Db):
 
     @classmethod
     def remove_commit(cls, ref):
-        return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.full_table_name, '%s',
-                                                                     ref))
+        return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.full_table_name, '%s'),
+                           ref)
 
     @classmethod
     def create_history(cls):
