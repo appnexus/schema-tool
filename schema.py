@@ -136,7 +136,7 @@ def build_chain():
 
 def get_alter_files():
     files = os.walk(ALTER_DIR).next()[2]
-    return [f for f in files if f.find('.sql') != -1]
+    return [f for f in files if FILENAME_STANDARD.search(f)]
 
 
 def build_soft_chain(files):
@@ -151,7 +151,7 @@ def build_soft_chain(files):
     nodes = []
 
     for f in files:
-        if f.find('.sql') == -1:
+        if not FILENAME_STANDARD.search(f):
             continue
 
         try:
@@ -1088,7 +1088,7 @@ class RebuildCommand(Command):
     def run(self):
         (options, args) = self.parser.parse_args()
 
-        sys.stdout.write("Brining all the way down\n")
+        sys.stdout.write("Bringing all the way down\n")
         sys.argv = [sys.argv[0]]
         if options.force:
             sys.argv.append('--force')
