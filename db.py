@@ -72,7 +72,11 @@ class Db(object):
 
         script = open(filename)
         out, err = proc.communicate(script.read())
-
+        if err:
+            sys.stderr.write("\n----------------------\n")
+            sys.stderr.write(out.rstrip())
+            sys.stderr.write(err.rstrip())
+            sys.stderr.write("\n----------------------\n")
         if not proc.returncode == 0:
             sys.stderr.write('Error')
             if verbose:
@@ -296,6 +300,8 @@ class PostgresDb(Db):
         cmd = ['psql',
                '-h', cls.config['host'],
                '-U', cls.config['username'],
+               '-v',
+               'schema=%s' % cls.config['schema_name'],
                cls.config['db_name']]
         my_env = None
         if 'password' in cls.config:
