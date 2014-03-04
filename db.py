@@ -194,6 +194,7 @@ class PostgresDb(Db):
     def execute(cls, query, data=None):
         try:
             cursor = cls.cursor
+            cursor.execute('SET search_path TO %s' % cls.config['schema_name'])
             if data:
                 cursor.execute(query, data)
             else:
