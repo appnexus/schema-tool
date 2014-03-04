@@ -3,9 +3,9 @@
     "password": "root", # mysql only
     "host": "localhost",
     "db_name": "tendril", # psql only
+    "schema_name": "tendril", # postgres only
     "revision_db_name": "revision", # mysql only
     "revision_schema_name": "tendril", # postgres only
-    "alter_schema_name": "tendril", # postgres only
     "history_table_name": "history",
     "type": "postgres"
 }
