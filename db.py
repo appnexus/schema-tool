@@ -300,10 +300,9 @@ class PostgresDb(Db):
         cmd = ['psql',
                '-h', cls.config['host'],
                '-U', cls.config['username'],
-               '-v',
-               'ON_ERROR_STOP=1',
-               '-v',
-               'schema=%s' % cls.config['schema_name'],
+               '-v', 'verbose',
+               '-v', 'ON_ERROR_STOP=1',
+               '-v', 'schema=%s' % cls.config['schema_name'],
                cls.config['db_name']]
         my_env = None
         if 'password' in cls.config:
