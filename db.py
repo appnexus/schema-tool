@@ -20,7 +20,7 @@ import mysql.connector.errors as db_errors
 class Db(object):
     """
     Do not instantiate directly.
-    Contains all the methods related to initialization of the environemnt that the
+    Contains all the methods related to initialization of the environment that the
     script will be running in.
     """
     @classmethod
@@ -300,6 +300,8 @@ class PostgresDb(Db):
         cmd = ['psql',
                '-h', cls.config['host'],
                '-U', cls.config['username'],
+               '-v',
+               'ON_ERROR_STOP=1',
                '-v',
                'schema=%s' % cls.config['schema_name'],
                cls.config['db_name']]
