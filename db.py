@@ -9,10 +9,18 @@ import subprocess
 import sys
 import re
 
-import psycopg2
-import psycopg2.extras
-import mysql.connector
-import mysql.connector.errors as db_errors
+try:
+    import psycopg2
+    import psycopg2.extras
+except ImportError:
+    pass
+
+try:
+    import mysql.connector
+    import mysql.connector.errors as db_errors
+except ImportError:
+    pass
+
 
 # TODO: Move connection management to schema.py. Instantiate a connection
 # before each run() method and close it at the end, using the DB.conn() method.
