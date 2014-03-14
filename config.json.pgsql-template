@@ -1,0 +1,9 @@
+{
+    "username": "root",
+    "host": "localhost",
+    "db_name": "tendril",
+    "schema_name": "tendril",
+    "revision_schema_name": "tendril",
+    "history_table_name": "history",
+    "type": "postgres"
+}

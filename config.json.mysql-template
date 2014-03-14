@@ -1,0 +1,8 @@
+{
+    "username": "root",
+    "password": "root",
+    "host": "localhost",
+    "revision_db_name": "revision",
+    "history_table_name": "history",
+    "type": "mysql"
+}
