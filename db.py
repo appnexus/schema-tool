@@ -114,15 +114,24 @@ class MySQLDb(Db):
         return cls
 
     @classmethod
-    def execute(cls, query, data):
+    def execute(cls, query, data=None):
         try:
             cursor = cls.cursor
-            cursor.execute(query, data)
+            if data is not None:
+              cursor.execute(query, data)
+            else:
+              cursor.execute(query)
         except mysql.connector.Error, e:
-            sys.stderr.write('Could not query DB: %s\n' % e.errmsglong)
+            sys.stderr.write(query)
+            sys.stderr.write('\nCould not query DB: %s\n' % e)
             sys.exit(1)
+
+        try:
+          res = cursor.fetchall()
+        except mysql.connector.InterfaceError, e:
+          res = None
         cls.conn.commit()
-        return cursor.fetchall()
+        return res
 
     @classmethod
     def drop_revision(cls):
@@ -139,12 +148,12 @@ class MySQLDb(Db):
     @classmethod
     def append_commit(cls, ref):
         return cls.execute('INSERT INTO %s (alter_hash) VALUES (%s)' % (cls.full_table_name, '%s'),
-                           ref)
+                           [ref])
 
     @classmethod
     def remove_commit(cls, ref):
         return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.full_table_name, '%s'),
-                           ref)
+                           [ref])
 
     @classmethod
     def create_history(cls):
@@ -185,11 +194,11 @@ class MySQLDb(Db):
         return conn
 
     @classmethod
-    def run_file_cmd(config):
+    def run_file_cmd(cls):
         cmd = ['mysql',
-               '-h', config['host'],
-               '-u', config['username'],
-               '-p', config['password']]
+               '-h', cls.config['host'],
+               '-u', cls.config['username'],
+               '-p%s' % cls.config['password']]
         my_env = None
         return cmd, my_env
 
