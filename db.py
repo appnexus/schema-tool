@@ -16,7 +16,6 @@ except ImportError:
     pass
 
 try:
-    raise ImportError
     import mysql.connector
     import mysql.connector.errors as db_errors
 except ImportError:
