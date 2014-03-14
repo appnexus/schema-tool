@@ -16,6 +16,7 @@ except ImportError:
     pass
 
 try:
+    raise ImportError
     import mysql.connector
     import mysql.connector.errors as db_errors
 except ImportError:
@@ -100,6 +101,12 @@ class Db(object):
 class MySQLDb(Db):
     @classmethod
     def init_conn(cls, config):
+        try:
+          mysql
+        except NameError:
+          sys.stderr.write('MySQL module not found/loaded. Please make sure all dependencies are installed\n')
+          sys.exit(1)
+
         cls.config = config
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
@@ -190,6 +197,12 @@ class MySQLDb(Db):
 class PostgresDb(Db):
     @classmethod
     def init_conn(cls, config):
+        try:
+          psycopg2
+        except NameError:
+          sys.stderr.write('Postgres module not found/loaded. Please make sure all dependencies are installed\n')
+          sys.exit(1)
+
         cls.config = config
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
