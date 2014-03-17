@@ -59,7 +59,7 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.j
 FILENAME_STANDARD = re.compile('^\d{12}-.+-(up|down)\.sql$')
 
 
-def main():
+def main(config):
     """
     Determine what command is being called and dispatch it to the appropriate
     handler. If the command is unknown or the '-h' flag has been given, display
@@ -72,7 +72,7 @@ def main():
         "  up          Bring up to particular revision",
         "  down        Roll back to a particular revision",
         "  rebuild     Run the entire database down and back up (hard refresh)",
-      # "  gen-ref     Generate new file-ref",
+        "  gen-ref     Generate new file-ref",
         "  gen-sql     Generate SQL for a given reference, including revision-history alter(s)",
         "  resolve     Resolve a divergent-branch conflict (found by 'check' command)",
         "  init        Initialize new project",
@@ -94,7 +94,7 @@ def main():
         sys.argv = sys.argv[1:]
         handler = [c['handler'] for c in COMMANDS if c['command'] == user_command][0]
         try:
-            globals()[handler]().run()
+            globals()[handler](config).run()
         except SystemExit:
             sys.exit(1)
         except EnvironmentError, er:
@@ -413,7 +413,8 @@ class Command(object):
     """
     The general command object. Does fun stuff...
     """
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.init_parser()
 
     def init_parser(self):
@@ -1176,7 +1177,7 @@ class GenSqlCommand(Command):
     def _find_ref(self, ref, nodes):
         """
         Given a revision (from the command line), check to see if it exists within
-        the set of nodes. If it does, return the node, else false
+        the set of nodes (working backwards). If it does, return the node, else false.
         """
         tail = nodes
         while tail is not None:
@@ -1214,8 +1215,12 @@ class GenSqlCommand(Command):
                 sys.exit(1)
 
         if options.gen_revision:
-            sql += "insert into revision.history (alter_hash, ran_on)" \
-                   " values ('%s', NOW());\n" % node.id
+            sql += "insert into `%s`.`%s` (alter_hash, ran_on)" \
+                   " values ('%s', NOW());\n" % (
+                       self.config['revision_db_name'],
+                       self.config['history_table_name'],
+                       node.id
+                   )
 
         return sql
 
@@ -1250,4 +1255,4 @@ if __name__ == "__main__":
             sys.exit(1)
     else:
         _DB = MySQLDb.init_conn(config)
-    main()
+    main(config)
