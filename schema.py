@@ -1144,6 +1144,9 @@ class GenSqlCommand(Command):
         parser.add_option('-S', '--no-sql',
                           action='store_false', dest='gen_sql', default=True,
                           help='Do not generate SQL for the actual alters, just revision inserts')
+        parser.add_option('-d', '--down',
+                          action='store_true', dest='down_alter', default=False,
+                          help='Generate SQL for down-alter instead of up (default)')
         self.parser = parser
 
     def run(self):
@@ -1205,22 +1208,33 @@ class GenSqlCommand(Command):
         sql = ''
         if options.gen_sql:
             try:
-                up_file = open(os.path.join(ALTER_DIR, node.filename))
-                sql = up_file.read()
+                sql_file = None
+                if options.down_alter:
+                    sql_file = open(os.path.join(ALTER_DIR, node.down_filename()))
+                else:
+                    sql_file = open(os.path.join(ALTER_DIR, node.filename))
+                sql = sql_file.read()
                 sql += "\n\n"
             except OSError, ex:
                 sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(ALTER_DIR, node.filename), ex))
-                if 'up_file' in locals():
-                    up_file.close()
+                if 'sql_file' in locals():
+                    sql_file.close()
                 sys.exit(1)
 
         if options.gen_revision:
-            sql += "insert into `%s`.`%s` (alter_hash, ran_on)" \
-                   " values ('%s', NOW());\n" % (
-                       self.config['revision_db_name'],
-                       self.config['history_table_name'],
-                       node.id
-                   )
+            if options.down_alter:
+                sql += "delete from `%s`.`%s` where alter_hash = '%s';\n" % (
+                           self.config['revision_db_name'],
+                           self.config['history_table_name'],
+                           node.id
+                       )
+            else:
+                sql += "insert into `%s`.`%s` (alter_hash, ran_on)" \
+                       " values ('%s', NOW());\n" % (
+                           self.config['revision_db_name'],
+                           self.config['history_table_name'],
+                           node.id
+                       )
 
         return sql
 
