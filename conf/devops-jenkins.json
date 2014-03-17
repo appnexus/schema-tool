@@ -1,6 +1,8 @@
 {
     "username": "dw_api_rw",
     "password": "13tm31n",
+    "revision_db_name": "revision",
+    "history_table_name": "history",
     "host": "localhost",
     "port": 3306
 }
