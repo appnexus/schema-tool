@@ -78,7 +78,7 @@ def main(config):
         "  init        Initialize new project",
         "  help        Show this help message and exit"
     ]
-    usage = "Usage: schema command [options]\n\nCommands:\n" + ("\n".join(commands))
+    usage = "schema command [options]\n\nCommands:\n" + ("\n".join(commands))
     parser = OptionParser(usage=usage)
 
     if len(sys.argv) == 1 or sys.argv[1] in ['-h', '--help', 'help']:
@@ -426,7 +426,7 @@ class Command(object):
 
 class NewCommand(Command):
     def init_parser(self):
-        usage = "Usage: schema new [options]"
+        usage = "schema new [options]"
         parser = OptionParser(usage=usage)
         parser.add_option('-f', '--file',
                           dest="filename", action="store",
@@ -479,7 +479,7 @@ class NewCommand(Command):
 
 class CheckCommand(Command):
     def init_parser(self):
-        usage = "Usage: schema check [options]"
+        usage = "schema check [options]"
         parser = OptionParser(usage=usage)
         parser.add_option('-v', '--verbose',
                           action='store_true', dest='verbose', default=False,
@@ -575,7 +575,7 @@ class ResolveCommand(Command):
         self.type = None
 
     def init_parser(self):
-        usage = "Usage: schema resolve [ref|filename]" \
+        usage = "schema resolve [ref|filename]" \
                 "\n\n" \
                 "Note: This command currently only resolves divergent files. All\n" \
                 "      other issues must be resolved by hand"
@@ -860,7 +860,7 @@ class ResolveCommand(Command):
 
 class ListCommand(Command):
     def init_parser(self):
-        usage = "Usage: schema list [options]"
+        usage = "schema list [options]"
         parser = OptionParser(usage=usage)
 
         parser.add_option('-l', '--list',
@@ -895,7 +895,7 @@ class ListCommand(Command):
 
 class UpCommand(Command):
     def init_parser(self):
-        usage = "Usage: schema up [options] [ref]" \
+        usage = "schema up [options] [ref]" \
                 "\n\n" \
                 "Arguments" \
                 "\n  ref               Rn all alters up to, and including the ref given"
@@ -991,7 +991,7 @@ class UpCommand(Command):
 
 class DownCommand(Command):
     def init_parser(self):
-        usage = "Usage: schema down [options] [all|base|ref]" \
+        usage = "schema down [options] [all|base|ref]" \
                 "\n\n" \
                 "Arguments" \
                 "\n  all               Undo all alters" \
@@ -1076,7 +1076,7 @@ class DownCommand(Command):
 
 class RebuildCommand(Command):
     def init_parser(self):
-        usage = "Usage: schema rebuild"
+        usage = "schema rebuild [options]"
         parser = OptionParser(usage=usage)
         parser.add_option('-f', '--force',
                           action='store_true', dest='force', default=False,
@@ -1109,7 +1109,7 @@ class RebuildCommand(Command):
 
 class GenRefCommand(Command):
     def init_parser(self):
-        useage = "Usage: schema gen-ref"
+        useage = "schema gen-ref"
         parser = OptionParser(usage=useage)
         self.parser = parser
 
@@ -1136,7 +1136,7 @@ class GenSqlCommand(Command):
     the revision database's history table.
     """
     def init_parser(self):
-        usage = "Usage: schema gen-sql [options] ref [ref [...]]"
+        usage = "schema gen-sql [options] ref [ref [...]]"
         parser = OptionParser(usage=usage)
         parser.add_option('-R', '--no-revision',
                           action='store_false', dest='gen_revision', default=True,
@@ -1240,7 +1240,7 @@ class GenSqlCommand(Command):
 
 class InitCommand(Command):
     def init_parser(self):
-        usage = "Usage: schema init"
+        usage = "schema init [options]"
         parser = OptionParser(usage=usage)
         parser.add_option('-f', '--force',
                           action='store_true', dest='force', default=False,
