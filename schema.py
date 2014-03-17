@@ -635,7 +635,7 @@ class ResolveCommand(Command):
 
         sys.stdout.write("\nRe-Checking...\n")
         sys.argv = [sys.argv[0]]
-        CheckCommand().run()
+        CheckCommand(self.config).run()
 
     def _file_exists(self):
         """
@@ -753,7 +753,7 @@ class ResolveCommand(Command):
             node = sub_chain.pop()
 
             # gen new ref
-            new_ref = (GenRefCommand()).gen_ref(i)
+            new_ref = (GenRefCommand(self.config)).gen_ref(i)
 
             # generate new file-names
             new_up_filename = self._rename_file(filename=node.filename, ref=new_ref)
@@ -927,7 +927,7 @@ class UpCommand(Command):
         """
         (options, args) = self.parser.parse_args()
 
-        CheckCommand().run(inline=True)
+        CheckCommand(self.config).run(inline=True)
 
         # get history
         history = _DB.get_commit_history()
@@ -1096,7 +1096,7 @@ class RebuildCommand(Command):
         if options.verbose:
             sys.argv.append('--verbose')
         sys.argv.append('all')
-        DownCommand().run()
+        DownCommand(self.config).run()
 
         sys.stdout.write("\nBringing all the way back up\n")
         sys.argv = [sys.argv[0]]
@@ -1104,7 +1104,7 @@ class RebuildCommand(Command):
             sys.argv.append('--force')
         if options.verbose:
             sys.argv.append('--verbose')
-        UpCommand().run()
+        UpCommand(self.config).run()
 
 
 class GenRefCommand(Command):
