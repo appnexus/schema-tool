@@ -111,6 +111,7 @@ class MySQLDb(Db):
         cls.cursor = cls.conn.cursor()
         cls.full_table_name = '`%s`.`%s`' % (cls.config['revision_db_name'],
                                              cls.config['history_table_name'])
+        cls.db_name = '`%s`' % cls.config['revision_db_name']
         return cls
 
     @classmethod
@@ -135,11 +136,11 @@ class MySQLDb(Db):
 
     @classmethod
     def drop_revision(cls):
-        return cls.execute('DROP DATABASE IF EXISTS %s' % cls.full_table_name)
+        return cls.execute('DROP DATABASE IF EXISTS %s' % cls.db_name)
 
     @classmethod
     def create_revision(cls):
-        return cls.execute('CREATE DATABASE IF NOT EXISTS %s' % cls.full_table_name)
+        return cls.execute('CREATE DATABASE IF NOT EXISTS %s' % cls.db_name)
 
     @classmethod
     def get_commit_history(cls):
