@@ -250,7 +250,7 @@ class PostgresDb(Db):
             if cursor.rowcount > 0:
                 try:
                     results = cursor.fetchall()
-                except psycopg2.ProgrammingError as e:
+                except psycopg2.ProgrammingError, e:
                     if str(e) != 'no results to fetch':
                         raise psycopg2.ProgrammingError(e.message)
             cls.conn.commit()
