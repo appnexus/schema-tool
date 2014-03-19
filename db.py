@@ -31,6 +31,14 @@ class Db(object):
     Contains all the methods related to initialization of the environment that the
     script will be running in.
     """
+    
+    @classmethod
+    def new(cls, config):
+        cls.config = config
+        cls.conn_initialized = False
+        
+        return cls
+
     @classmethod
     def init(cls, force=False):
         """
@@ -99,23 +107,40 @@ class Db(object):
 
 class MySQLDb(Db):
     @classmethod
-    def init_conn(cls, config):
+    def new(cls, config):
+        super(MySQLDb, cls).new(config)
+
+        if 'revision_db_name' in cls.config and 'history_table_name' in cls.config:
+            cls.full_table_name = '`%s`.`%s`' % (cls.config['revision_db_name'],
+                                                 cls.config['history_table_name'])
+            cls.db_name = '`%s`' % cls.config['revision_db_name']
+        else:
+            sys.stderr.write('No history schema found in config file. Please add values for the '
+                             'following keys: revision_schema_name, history_table_name\n')
+            sys.exit(1)
+
+
+        return cls
+
+
+    @classmethod
+    def init_conn(cls):
         try:
           mysql
         except NameError:
           sys.stderr.write('MySQL module not found/loaded. Please make sure all dependencies are installed\n')
           sys.exit(1)
 
-        cls.config = config
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
-        cls.full_table_name = '`%s`.`%s`' % (cls.config['revision_db_name'],
-                                             cls.config['history_table_name'])
-        cls.db_name = '`%s`' % cls.config['revision_db_name']
+
+        cls.conn_initialized = True
         return cls
 
     @classmethod
     def execute(cls, query, data=None):
+        if not cls.conn_initialized:
+            cls.init_conn()
         try:
             cursor = cls.cursor
             if data is not None:
@@ -205,16 +230,8 @@ class MySQLDb(Db):
 
 class PostgresDb(Db):
     @classmethod
-    def init_conn(cls, config):
-        try:
-          psycopg2
-        except NameError:
-          sys.stderr.write('Postgres module not found/loaded. Please make sure all dependencies are installed\n')
-          sys.exit(1)
-
-        cls.config = config
-        cls.conn = cls.conn()
-        cls.cursor = cls.conn.cursor()
+    def new(cls, config):
+        super(PostgresDb, cls).new(config)
         if 'revision_schema_name' in cls.config:
             cls.full_table_name = '"%s"."%s"' % (cls.config['revision_schema_name'],
                                                  cls.config['history_table_name'])
@@ -222,10 +239,27 @@ class PostgresDb(Db):
             sys.stderr.write('No schema found in config file. Please add one with the key: '
                              'revision_schema_name')
             sys.exit(1)
+
+        return cls
+
+    @classmethod
+    def init_conn(cls):
+        try:
+          psycopg2
+        except NameError:
+          sys.stderr.write('Postgres module not found/loaded. Please make sure all dependencies are installed\n')
+          sys.exit(1)
+
+        cls.conn = cls.conn()
+        cls.cursor = cls.conn.cursor()
+
+        cls.conn_initialized = True
         return cls
 
     @classmethod
     def execute(cls, query, data=None):
+        if not cls.conn_initialized:
+            cls.init_conn()
         try:
             cursor = cls.cursor
             cursor.execute('SET search_path TO %s' % cls.config['schema_name'])

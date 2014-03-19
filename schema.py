@@ -1260,13 +1260,13 @@ if __name__ == "__main__":
     global _DB
     if 'type' in config:
         if config['type'] == 'postgres':
-            _DB = PostgresDb.init_conn(config)
+            _DB = PostgresDb.new(config)
         elif config['type'] == 'mysql':
-            _DB = MySQLDb.init_conn(config)
+            _DB = MySQLDb.new(config)
         else:
             sys.stderr.write('Invalid database type in config. Only \'postgres\' and \'mysql\' \
             are allowed.')
             sys.exit(1)
     else:
-        _DB = MySQLDb.init_conn(config)
+        _DB = MySQLDb.new(config)
     main(config)
