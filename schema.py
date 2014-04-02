@@ -567,8 +567,8 @@ class CheckCommand(Command):
 
 
 class ResolveCommand(Command):
-    def __init__(self):
-        Command.__init__(self)
+    def __init__(self, config):
+        Command.__init__(self, config)
         self.nodes = None
         self.file = None
         self.ref = None
@@ -610,6 +610,7 @@ class ResolveCommand(Command):
         if len(args) == 0:
             sys.stderr.write("You must provide a filename or reference\n")
             self.parser.print_help()
+            sys.exit(1)
 
         # search for file/ref
         self.file = self.ref = args[0]
