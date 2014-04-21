@@ -219,7 +219,7 @@ def build_and_validate_linked_list(nodes):
                              "\n(not existing files that were previously in a good state)."
                              "\n\n")
             for node in _nodes:
-                sys.stderr.write("\tDuplicate backref found (divegent branch): %s\n" % node.filename)
+                sys.stderr.write("\tDuplicate backref found (divergent branch): %s\n" % node.filename)
             sys.stderr.write("\n")
             sys.exit(1)
 
