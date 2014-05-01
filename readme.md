@@ -209,6 +209,17 @@ the alters can be run) such as [Jenkins][1] and [Gerrit][2] (to enforce the reba
 
 __ToDo__: Determine how we want to manage this process
 
+## Contributing
+
+If you would like to contribute, please see our current list of issues and/or feature requests
+and send us a pull request. If you have something specific that you'd like to add or fix please
+open up an issue for discussion. If it is a fix for a bug or everyone agrees that it would be
+a useful feature, then submit your pull request. Make sure that your pull request's commit message
+uses one of the [appropriate identifiers][4] to link the pull request to the issue.
+
+__ToDo__: Update link for current contributors
+[Current contributors][5]
+
 ## License
 
 __ToDo__: Determine what license is appropriate
@@ -219,3 +230,5 @@ __ToDo__: Determine what license is appropriate
   [1]: http://jenkins-ci.org/
   [2]: https://code.google.com/p/gerrit/
   [3]: https://github.com/psycopg/psycopg2
+  [4]: https://github.com/blog/1386-closing-issues-via-commit-messages
+  [5]: #
