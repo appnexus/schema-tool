@@ -39,7 +39,8 @@ from db import MySQLDb, PostgresDb
 
 MAINTAINER = "John Murray <jmurray@appnexus.com>"
 
-ALTER_DIR = os.path.dirname(os.path.abspath(__file__)) + '/../'
+#ALTER_DIR = os.path.dirname(os.path.abspath(__file__)) + '/../'
+ALTER_DIR = os.path.abspath(os.path.curdir) + '/'
 
 COMMANDS = [
     {'command': 'new',      'handler': 'NewCommand'},
@@ -54,7 +55,8 @@ COMMANDS = [
     {'command': 'gen-sql',  'handler': 'GenSqlCommand'}
 ]
 
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
+#CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
+CONFIG_FILE = os.path.join(ALTER_DIR, 'config.json')
 
 FILENAME_STANDARD = re.compile('^\d{12}-.+-(up|down)\.sql$')
 
@@ -363,6 +365,7 @@ def load_config():
             sys.exit(1)
     except IOError, ex:
         sys.stderr.write("Error reading config: %s\n" % ex.strerror)
+        sys.stderr.write("Tried reading: %s\n" % CONFIG_FILE)
         sys.exit(1)
     return config
 
@@ -948,7 +951,8 @@ class UpCommand(Command):
         # get current alter-chain
         tail = build_chain()
         alter_list = [tail]
-        alter_list.remove(None)
+        if None in alter_list:
+            alter_list.remove(None)
         while tail is not None and tail.backref is not None:
             tail = tail.backref
             alter_list.append(tail)
@@ -1041,7 +1045,8 @@ class DownCommand(Command):
         # get current alter-chain
         tail = build_chain()
         alter_list = [tail]
-        alter_list.remove(None)
+        if None in alter_list:
+            alter_list.remove(None)
         while tail is not None and tail.backref is not None:
             tail = tail.backref
             alter_list.append(tail)
