@@ -22,32 +22,30 @@ is an excellent DSL already, so there is no need for that.why
 
 ## Getting Started
 
-The tool assumes that you will have a repository (or at least directory) dedicated to alters
-and that this tool will be located in the `bin` directory of your schema repo. If I am creating
-a new project I can simply do the following:
+You need to download the tool and (preferrably) have the `schema` executable somewhere on
+your path. The tool does not have to be located with the alters you are working with. You can
+get started with the tool simply by doing
+
+    mkdir -p ~/bin
+    cd ~/bin
+    git clone REPO_URL schema-tool
+    echo 'export PATH="$HOME/bin/schema-tool:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+
+If I am creating a new project I can simply do the following:
 
     mkdir my-schemas
     cd my-schemas/
     git init
-    git submodule add REPO_URL bin
-    cd bin
 
-    cp config.json.mysql-template config.json
+    cp ~/bin/schema-tool/conf/config.json.mysql-template config.json
     # or
-    cp config.json.pgsql-template config.json
+    cp ~/bin/schema-tool/conf/config.json.pgsql-template config.json
 
     vim config.json #edit appropriately
 
-    # cd back to root dir of schemas
-    cd .. 
-
-    # add the schema tool to your path
-    echo "export PATH='`pwd`/bin:$PATH'" > ~/.bashrc
-
 
 + __ToDo__: add the real repo URL when this is published to github
-+ __ToDo__: revisit sub-module once the script has been generalized to be shell-local
-+ __Todo__: revisit where the configuration lives when script is shell-local
 
 Take a look at the mysql template config file and you'll see
 
