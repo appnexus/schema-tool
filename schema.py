@@ -186,6 +186,11 @@ def build_and_validate_linked_list(nodes):
     Returns tail of list (since it's processed backwards)
     :rtype : SimpleNode
     """
+    # check if we're working with no nodes, return None if so
+    # don't error/exit because and empty list is not necessarily invalid
+    if len(nodes) == 0:
+      return None
+
     heads = []
     backrefs = {}
     for node in nodes:
@@ -450,13 +455,15 @@ class NewCommand(Command):
 
         alter_list_tail = build_chain()
 
-        sys.stdout.write("Parent file:  %s\n" % alter_list_tail.filename)
+        if alter_list_tail is not None:
+            sys.stdout.write("Parent file:  %s\n" % alter_list_tail.filename)
 
         up_filename = filename + '-up.sql'
         try:
             alter_file = open(os.path.join(ALTER_DIR, up_filename), 'w')
             alter_file.write("-- direction: up\n")
-            alter_file.write("-- backref: %s\n" % alter_list_tail.id)
+            if alter_list_tail is not None:
+                alter_file.write("-- backref: %s\n" % alter_list_tail.id)
             alter_file.write("-- ref: %s\n" % timestamp)
             alter_file.write("\n\n\n")
         except OSError, ex:
@@ -468,7 +475,8 @@ class NewCommand(Command):
         try:
             alter_file = open(os.path.join(ALTER_DIR, down_filename), 'w')
             alter_file.write("-- direction: down\n")
-            alter_file.write("-- backref: %s\n" % alter_list_tail.id)
+            if alter_list_tail is not None:
+                alter_file.write("-- backref: %s\n" % alter_list_tail.id)
             alter_file.write("-- ref: %s\n" % timestamp)
             alter_file.write("\n\n\n")
         except OSError, ex:
@@ -886,12 +894,15 @@ class ListCommand(Command):
 
         list_tail = build_chain()
 
-        if list_reverse:
-            normal_str = str(list_tail).splitlines()
-            normal_str.reverse()
-            print("\n".join(normal_str))
-        elif list_normal:
-            print("%s" % list_tail)
+        if list_tail is None:
+            sys.stdout.write("No alters found\n")
+        else:
+            if list_reverse:
+                normal_str = str(list_tail).splitlines()
+                normal_str.reverse()
+                print("\n".join(normal_str))
+            elif list_normal:
+                print("%s" % list_tail)
 
 
 class UpCommand(Command):
@@ -937,7 +948,8 @@ class UpCommand(Command):
         # get current alter-chain
         tail = build_chain()
         alter_list = [tail]
-        while tail.backref is not None:
+        alter_list.remove(None)
+        while tail is not None and tail.backref is not None:
             tail = tail.backref
             alter_list.append(tail)
 
@@ -1029,7 +1041,8 @@ class DownCommand(Command):
         # get current alter-chain
         tail = build_chain()
         alter_list = [tail]
-        while tail.backref is not None:
+        alter_list.remove(None)
+        while tail is not None and tail.backref is not None:
             tail = tail.backref
             alter_list.append(tail)
 
