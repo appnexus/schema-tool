@@ -23,8 +23,10 @@ is an excellent DSL already, so there is no need for that.why
 ## Getting Started
 
 You need to download the tool and (preferrably) have the `schema` executable somewhere on
-your path. The tool does not have to be located with the alters you are working with. You can
-get started with the tool simply by doing
+your path.You can get started with the tool simply by doing
+
+> Note: Unlike previous versions, the tool does not have to be located with(in) the
+> directory containing the alters you are working with.
 
     mkdir -p ~/bin
     cd ~/bin
@@ -170,7 +172,7 @@ be aware of that each command supports:
 + `-v` outputs verbose error messages
 + `-f` will ignore errors and move on to running the next alter
 + `-n` (only on `up` and `down`) specifies the number of alters to run from current point
-+ `ref` you can provide a reference number to run up/down to. for rebuild it will run down to
++ `ref` you can provide a reference number to run up/down to. For rebuild it will run down to
   this commit and back up (inclusively)
   
 You may run into errors when switching branches often because the tool will get confused on
@@ -200,8 +202,9 @@ you can rebase against `master` and then run a `schema check` followed by a `sch
 if necessary. When you merge to master you ensure that the feature branch is up-to-date.
 
 In this way you avoid merges with `master` (and thus divergent alter-chains) and ensure that
-`master` is clean. You can further enforce this workflow with testing (ensuring that all
-the alters can be run) such as [Jenkins][1] and [Gerrit][2] (to enforce the rebase-based workflow).
+`master` is clean (and ideally stable). You can further enforce this workflow with testing 
+(ensuring that all the alters can be run) such as [Jenkins][1] and [Gerrit][2] (to enforce 
+the rebase-based workflow).
 
 ## Reporting Issues / Feature Requests
 
