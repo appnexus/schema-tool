@@ -37,7 +37,7 @@ from traceback import print_exc
 
 from db import MySQLDb, PostgresDb
 
-MAINTAINER = "John Murray <jmurray@appnexus.com>"
+ISSUE_URL = "http://github.com/appnexus/schema-tool/issues"
 
 #ALTER_DIR = os.path.dirname(os.path.abspath(__file__)) + '/../'
 ALTER_DIR = os.path.abspath(os.path.curdir) + '/'
@@ -101,14 +101,14 @@ def main(config):
             sys.exit(1)
         except EnvironmentError, er:
             sys.stderr.write(
-                "An exception has occurred... Sorry. You should gripe to %s about this\n\n" % (
-                    MAINTAINER))
+                "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
+                    ISSUE_URL))
             sys.stderr.write("Error: %s, %s\n\n" % (er.errno, er.strerror))
             sys.exit(1)
         except Exception, ex:
             sys.stderr.write(
-                "An exception has occurred... Sorry. You should gripe to %s about this\n\n" % (
-                    MAINTAINER))
+                "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
+                    ISSUE_URL))
             sys.stderr.write("Error: %s\n\n" % ex)
             print_exc()
             sys.exit(1)

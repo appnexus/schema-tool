@@ -208,7 +208,14 @@ the rebase-based workflow).
 
 ## Reporting Issues / Feature Requests
 
-__ToDo__: Determine how we want to manage this process
+If you run into an issue that results in a script error (Python stacktrace) then please
+open up a ticket in the GitHub issue tracker. Please include the following information
+
++ Steps to reproduce issue
++ Entire error output including stack trace
+
+We'll work with you to resolve the issue and collect any more information that may be
+required to diagnose the issue.
 
 ## Contributing
 
