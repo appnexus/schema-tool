@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 # File: schema
 # Author: John Murray <jmurray@appnexus.com>
