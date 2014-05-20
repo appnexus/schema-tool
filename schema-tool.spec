@@ -22,7 +22,7 @@ A schema tool to manage alters and migrations.
 mkdir -p %{buildroot}/usr/local/adnxs/schema-tool/
 mkdir -p %{buildroot}/usr/bin
 cp -R * %{buildroot}/usr/local/adnxs/schema-tool/
-ln -s /usr/local/adnxs/schema-tool/schema.py %{buildroot}/usr/bin/schema-tool
+ln -s /usr/local/adnxs/schema-tool/schema.py %{buildroot}/usr/bin/schema
 
 %clean
 rm -rf %{buildroot}
@@ -30,4 +30,4 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root)
 /usr/local/adnxs/schema-tool/
-/usr/bin/schema-tool
+/usr/bin/schema
