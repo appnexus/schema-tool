@@ -19,13 +19,15 @@ A schema tool to manage alters and migrations.
 %build
 
 %install
-mkdir -p %{buildroot}/usr/local/bin/schema-tool
-cp -R * %{buildroot}/usr/local/bin/schema-tool
-ln -s /usr/local/bin/schema-tool/schema.py %{buildroot}/usr/bin/schema
+mkdir -p %{buildroot}/usr/local/adnxs/schema-tool/
+mkdir -p %{buildroot}/usr/bin
+cp -R * %{buildroot}/usr/local/adnxs/schema-tool/
+ln -s /usr/local/adnxs/schema-tool/schema.py %{buildroot}/usr/bin/schema-tool
 
 %clean
 rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
-/usr/local/bin/schema-tool/%{version}
+/usr/local/adnxs/schema-tool/
+/usr/bin/schema-tool
