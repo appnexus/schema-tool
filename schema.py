@@ -369,6 +369,19 @@ def load_config():
         sys.exit(1)
     return config
 
+def set_is_applied_flag(chain):
+    """
+    Sets a flag for each node in the chain whether it has been applied to the
+    database or not.
+    """
+    applied_alters = _DB.get_applied_alters()
+    tail = chain
+    while tail is not None:
+        if tail.id in applied_alters:
+            tail.is_applied = True
+        else:
+            tail.is_applied = False
+        tail = tail.backref
 
 # SUPPORT CLASSES
 class SimpleNode:
@@ -384,6 +397,8 @@ class SimpleNode:
         self.re_num       = re.compile('^\d{12}-')
         self.re_direction = re.compile('-(up|down).sql$')
 
+        self.is_applied = None
+
     def __str__(self, recursive=True):
         out = ''
         if self.backref is not None:
@@ -392,6 +407,10 @@ class SimpleNode:
             out += '   '
         filename = self.re_num.sub('', self.filename)
         filename = self.re_direction.sub('', filename)
+        if self.is_applied:
+            out += '*'
+        else:
+            out += ' '
         out += ("[%s] %s" % (str(self.id), filename))
 
         if recursive:
@@ -872,7 +891,9 @@ class ResolveCommand(Command):
 
 class ListCommand(Command):
     def init_parser(self):
-        usage = "schema list [options]"
+        usage = "schema list [options]" \
+                "\n\n" \
+                "Note: * denotes that the alter is applied on the database."
         parser = OptionParser(usage=usage)
 
         parser.add_option('-l', '--list',
@@ -896,6 +917,8 @@ class ListCommand(Command):
         list_reverse = options.listReverse
 
         list_tail = build_chain()
+
+        set_is_applied_flag(list_tail)
 
         if list_tail is None:
             sys.stdout.write("No alters found\n")

@@ -31,12 +31,12 @@ class Db(object):
     Contains all the methods related to initialization of the environment that the
     script will be running in.
     """
-    
+
     @classmethod
     def new(cls, config):
         cls.config = config
         cls.conn_initialized = False
-        
+
         return cls
 
     @classmethod
@@ -104,6 +104,11 @@ class Db(object):
             if exit_on_error:
                 sys.exit(1)
 
+    @classmethod
+    def get_applied_alters(cls):
+        results = cls.execute('SELECT alter_hash FROM %s' % cls.full_table_name)
+        alters_hashes = [result[0] for result in results]
+        return alters_hashes
 
 class MySQLDb(Db):
     @classmethod
