@@ -117,247 +117,249 @@ def main(config):
         parser.print_help()
 
 
-# Public Method
-def build_chain():
-    """
-    Walk the schemas directory and build the chain of alterations that should be run. Also
-    return a list of "out-of-chain" items that don't quite fit.
-
-    Returns tail of list representing current files
-    :rtype : SimpleNode
-    """
-    files     = get_alter_files()
-    nodes     = build_soft_chain(files)
-    list_tail = build_and_validate_linked_list(nodes)
-
-    # some debug statements
-    # print("%r\n" % nodes)
-    # print("%s\n" % list_tail)
-
-    return list_tail
-
-
-# Public Method
-def get_alter_files():
-    files = os.walk(ALTER_DIR).next()[2]
-    return [f for f in files if FILENAME_STANDARD.search(f)]
+class ChainUtil(object):
+    @classmethod
+    def build_chain(cls):
+        """
+        Walk the schemas directory and build the chain of alterations that should be run. Also
+        return a list of "out-of-chain" items that don't quite fit.
+    
+        Returns tail of list representing current files
+        :rtype : SimpleNode
+        """
+        files     = cls.get_alter_files()
+        nodes     = cls.build_soft_chain(files)
+        list_tail = cls.__build_and_validate_linked_list(nodes)
+    
+        # some debug statements
+        # print("%r\n" % nodes)
+        # print("%s\n" % list_tail)
+    
+        return list_tail
 
 
-# Public Method
-def build_soft_chain(files):
-    """
-    Build a list of nodes "soft" linked. This means that each has an id
-    (an integer value) and possibly a backref which is also an integer.
-    Not a truly "linked" list
-
-    Returns an array of SimpleNodes
-    :rtype : list
-    """
-    nodes = []
-
-    for f in files:
-        if not FILENAME_STANDARD.search(f):
-            continue
-
-        try:
-            my_file = open(os.path.join(ALTER_DIR, f))
-            head = list(islice(my_file, 3))
-        except OSError, ex:
-            sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(ALTER_DIR, f), ex.message))
-            sys.exit(1)
-
-        if not parse_direction(head) == 'up':
-            continue
-
-        refs = parse_meta(head)
-
-        if not 'ref' in refs:
-            continue
-
-        node = SimpleNode(filename=f, id=refs['ref'])
-        if 'backref' in refs:
-            node.backref = refs['backref']
-
-        nodes.append(node)
-
-    return nodes
+    @classmethod
+    def get_alter_files(cls):
+        files = os.walk(ALTER_DIR).next()[2]
+        return [f for f in files if FILENAME_STANDARD.search(f)]
 
 
-# Private Method (used by: build_chain)
-def build_and_validate_linked_list(nodes):
-    """
-    Build a linked list and validate it's correctness given an array of
-    SimpleNodes contain soft/weak references to each other
-
-    Returns tail of list (since it's processed backwards)
-    :rtype : SimpleNode
-    """
-    # check if we're working with no nodes, return None if so
-    # don't error/exit because and empty list is not necessarily invalid
-    if len(nodes) == 0:
-      return None
-
-    heads = []
-    backrefs = {}
-    for node in nodes:
-        if node.backref is not None:
-            # Check for duplicate refs
-            backnodes = [n for n in nodes if n.id == node.backref]
-            if len(backnodes) > 1:
-                for b in backnodes:
-                    sys.stderr.write("Duplicate refs found in %s\n" % b.filename)
+    @classmethod
+    def build_soft_chain(cls, files):
+        """
+        Build a list of nodes "soft" linked. This means that each has an id
+        (an integer value) and possibly a backref which is also an integer.
+        Not a truly "linked" list
+    
+        Returns an array of SimpleNodes
+        :rtype : list
+        """
+        nodes = []
+    
+        for f in files:
+            if not FILENAME_STANDARD.search(f):
+                continue
+    
+            try:
+                my_file = open(os.path.join(ALTER_DIR, f))
+                head = list(islice(my_file, 3))
+            except OSError, ex:
+                sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(ALTER_DIR, f), ex.message))
                 sys.exit(1)
-            elif len(backnodes) == 1:
-                node.backref = backnodes[0]
+    
+            if not MetaDataUtil.parse_direction(head) == 'up':
+                continue
+    
+            refs = MetaDataUtil.parse_meta(head)
+    
+            if not 'ref' in refs:
+                continue
+    
+            node = SimpleNode(filename=f, id=refs['ref'])
+            if 'backref' in refs:
+                node.backref = refs['backref']
+    
+            nodes.append(node)
+    
+        return nodes
+
+
+    @classmethod
+    def __build_and_validate_linked_list(cls, nodes):
+        """
+        Build a linked list and validate it's correctness given an array of
+        SimpleNodes contain soft/weak references to each other
+    
+        Returns tail of list (since it's processed backwards)
+        :rtype : SimpleNode
+        """
+        # check if we're working with no nodes, return None if so
+        # don't error/exit because and empty list is not necessarily invalid
+        if len(nodes) == 0:
+          return None
+    
+        heads = []
+        backrefs = {}
+        for node in nodes:
+            if node.backref is not None:
+                # Check for duplicate refs
+                backnodes = [n for n in nodes if n.id == node.backref]
+                if len(backnodes) > 1:
+                    for b in backnodes:
+                        sys.stderr.write("Duplicate refs found in %s\n" % b.filename)
+                    sys.exit(1)
+                elif len(backnodes) == 1:
+                    node.backref = backnodes[0]
+                else:
+                    sys.stderr.write("Backref points to non-existent alter: %s\n" % node.filename)
+                    sys.exit(1)
+    
+                # catalog backrefs (for divergence checking)
+                if node.backref.id not in backrefs:
+                    backrefs[node.backref.id] = []
+                backrefs[node.backref.id].append(node)
             else:
-                sys.stderr.write("Backref points to non-existent alter: %s\n" % node.filename)
+                heads.append(node)
+    
+        # check backref catalog for duplicates
+        for (backref_id, _nodes) in backrefs.iteritems():
+            if len(_nodes) > 1:
+                sys.stderr.write("Divergent Branch:"
+                                 "\nThis means that we have found alters that share a common parent. To fix"
+                                 "\nthis you can run the 'resolve' command. When merging changes from your"
+                                 "\nfeature-branch, ensure that you resolve your files that are in conflict"
+                                 "\n(not existing files that were previously in a good state)."
+                                 "\n\n")
+                for node in _nodes:
+                    sys.stderr.write("\tDuplicate backref found (divergent branch): %s\n" % node.filename)
+                sys.stderr.write("\n")
                 sys.exit(1)
-
-            # catalog backrefs (for divergence checking)
-            if node.backref.id not in backrefs:
-                backrefs[node.backref.id] = []
-            backrefs[node.backref.id].append(node)
-        else:
-            heads.append(node)
-
-    # check backref catalog for duplicates
-    for (backref_id, _nodes) in backrefs.iteritems():
-        if len(_nodes) > 1:
-            sys.stderr.write("Divergent Branch:"
-                             "\nThis means that we have found alters that share a common parent. To fix"
-                             "\nthis you can run the 'resolve' command. When merging changes from your"
-                             "\nfeature-branch, ensure that you resolve your files that are in conflict"
-                             "\n(not existing files that were previously in a good state)."
-                             "\n\n")
-            for node in _nodes:
-                sys.stderr.write("\tDuplicate backref found (divergent branch): %s\n" % node.filename)
-            sys.stderr.write("\n")
+    
+        # check head(s)
+        if len(heads) > 1:
+            sys.stderr.write("More than one head found:\n")
+            for head in heads:
+                sys.stderr.write("  %s\n" % head.filename)
             sys.exit(1)
-
-    # check head(s)
-    if len(heads) > 1:
-        sys.stderr.write("More than one head found:\n")
-        for head in heads:
-            sys.stderr.write("  %s\n" % head.filename)
-        sys.exit(1)
-    elif len(heads) == 0:
-        sys.stderr.write("No head found\n")
-        sys.exit(1)
-
-    # check tail(s)
-    tails = []
-    for node in nodes:
-        if node.backref is None:
-            continue
-        children = [n for n in nodes if n.backref == node]
-        if len(children) == 0:
-            tails.append(node)
-
-    if len(tails) > 1:
-        for tail in tails:
-            sys.stderr.write("Duplicate backref found in %s\n" % tail.filename)
-        sys.exit(1)
-    elif len(tails) == 0 and (not len(nodes) == 1):
-        sys.stderr.write("something strange is happening... no last alter found (circular references!!)\n")
-        sys.exit(1)
-
-    if len(nodes) == 1:
-        return heads[0]
-    else:
-        return tails[0]
+        elif len(heads) == 0:
+            sys.stderr.write("No head found\n")
+            sys.exit(1)
+    
+        # check tail(s)
+        tails = []
+        for node in nodes:
+            if node.backref is None:
+                continue
+            children = [n for n in nodes if n.backref == node]
+            if len(children) == 0:
+                tails.append(node)
+    
+        if len(tails) > 1:
+            for tail in tails:
+                sys.stderr.write("Duplicate backref found in %s\n" % tail.filename)
+            sys.exit(1)
+        elif len(tails) == 0 and (not len(nodes) == 1):
+            sys.stderr.write("something strange is happening... no last alter found (circular references!!)\n")
+            sys.exit(1)
+    
+        if len(nodes) == 1:
+            return heads[0]
+        else:
+            return tails[0]
 
 
-# Public Method
-def parse_direction(head):
-    """
-    Given the entire head meta-data (an array of strings) parse out
-    the direction of the alter (up/down) and return that value.
-
-    Returns a string 'up' or 'down' or None if nothing can be parsed
-    from the given input
-    """
-    head = [h.strip() for h in head]
-    direction = None
-    for line in head:
-        direction = _parse_line_for_direction(line) or direction
-
-    return direction
-
-
-# Private Method (used by parse_direction)
-def _parse_line_for_direction(line):
-    """
-    Given a single line, see if we can parse out the alter-direction (up/down
-    sql) and return the direction 'up' or 'down'. If nothing can be parsed out
-    of the line, then return None
-    """
-    if line is None:
-        return None
-
-    if not line[0:2] == '--':
-        return None
-    regex = re.compile('--\s*')
-    line = regex.sub('', line)
-
-    up_regex   = re.compile('direction\s*:\s*(up)')
-    down_regex = re.compile('direction\s*:\s*(down)')
-
-    up   = up_regex.match(line)
-    down = down_regex.match(line)
-
-    if up is not None:
-        return up.groups()[0]
-    elif down is not None:
-        return down.groups()[0]
-    else:
-        return None
-
-
-# Public Method
-def parse_meta(head):
-    """
-    Given the top two lines of the file, parse the meta-data and what have
-    you. Really just the refs (this-ref and back-ref)
-
-    Return a dict of this-ref and back-ref as:
-    {"ref": int, "backref": int}
-
-    Note: may not have a backref if first element, but should always have a ref
-    """
-    head = [h.rstrip() for h in head]
-    refs = {}
-    for line in head:
-        (ref, ref_type) = parse_ref(line)
-        if not ref_type == 'none':
-            refs[ref_type] = ref
-    return refs
-
-
-# Private Method (used by: parse_meta)
-def parse_ref(line):
-    """
-    Parse out the ref, or backref, of the meta-data that is stored at the top
-    of each SQL file.
-    """
-    if not line[0:2] == '--':
-        return None, 'none'
-    regex = re.compile('--\s*')
-    line = regex.sub('', line)
-
-    ref_match     = re.compile('ref\s*:\s*(\d+)')
-    backref_match = re.compile('backref\s*:\s*(\d+)')
-
-    rm  = ref_match.match(line)
-    brm = backref_match.match(line)
-
-    if rm is not None:
-        rid = rm.groups()[0]
-        return rid, 'ref'
-    elif brm is not None:
-        br_id = brm.groups()[0]
-        return br_id, 'backref'
-    else:
-        return None, 'none'
+class MetaDataUtil(object):
+    @classmethod
+    def parse_direction(cls, head):
+        """
+        Given the entire head meta-data (an array of strings) parse out
+        the direction of the alter (up/down) and return that value.
+    
+        Returns a string 'up' or 'down' or None if nothing can be parsed
+        from the given input
+        """
+        head = [h.strip() for h in head]
+        direction = None
+        for line in head:
+            direction = cls.__parse_line_for_direction(line) or direction
+    
+        return direction
+    
+    
+    @classmethod
+    def __parse_line_for_direction(cls, line):
+        """
+        Given a single line, see if we can parse out the alter-direction (up/down
+        sql) and return the direction 'up' or 'down'. If nothing can be parsed out
+        of the line, then return None
+        """
+        if line is None:
+            return None
+    
+        if not line[0:2] == '--':
+            return None
+        regex = re.compile('--\s*')
+        line = regex.sub('', line)
+    
+        up_regex   = re.compile('direction\s*:\s*(up)')
+        down_regex = re.compile('direction\s*:\s*(down)')
+    
+        up   = up_regex.match(line)
+        down = down_regex.match(line)
+    
+        if up is not None:
+            return up.groups()[0]
+        elif down is not None:
+            return down.groups()[0]
+        else:
+            return None
+    
+    
+    @classmethod
+    def parse_meta(cls, head):
+        """
+        Given the top two lines of the file, parse the meta-data and what have
+        you. Really just the refs (this-ref and back-ref)
+    
+        Return a dict of this-ref and back-ref as:
+        {"ref": int, "backref": int}
+    
+        Note: may not have a backref if first element, but should always have a ref
+        """
+        head = [h.rstrip() for h in head]
+        refs = {}
+        for line in head:
+            (ref, ref_type) = cls.__parse_ref(line)
+            if not ref_type == 'none':
+                refs[ref_type] = ref
+        return refs
+    
+    
+    @classmethod
+    def __parse_ref(cls, line):
+        """
+        Parse out the ref, or backref, of the meta-data that is stored at the top
+        of each SQL file.
+        """
+        if not line[0:2] == '--':
+            return None, 'none'
+        regex = re.compile('--\s*')
+        line = regex.sub('', line)
+    
+        ref_match     = re.compile('ref\s*:\s*(\d+)')
+        backref_match = re.compile('backref\s*:\s*(\d+)')
+    
+        rm  = ref_match.match(line)
+        brm = backref_match.match(line)
+    
+        if rm is not None:
+            rid = rm.groups()[0]
+            return rid, 'ref'
+        elif brm is not None:
+            br_id = brm.groups()[0]
+            return br_id, 'backref'
+        else:
+            return None, 'none'
 
 
 def load_config():
@@ -507,7 +509,7 @@ class NewCommand(Command):
         timestamp = str(round(time() * 10)).replace('.', '')
         filename = timestamp + '-' + (options.filename or '_').replace('.sql', '')
 
-        alter_list_tail = build_chain()
+        alter_list_tail = ChainUtil.build_chain()
 
         if alter_list_tail is not None:
             sys.stdout.write("Parent file:  %s\n" % alter_list_tail.filename)
@@ -560,10 +562,10 @@ class CheckCommand(Command):
         if not inline:
             (options, args) = self.parser.parse_args()
 
-        self.files = get_alter_files()
+        self.files = ChainUtil.get_alter_files()
 
         # implicitly check validity of chain (integrety check)
-        chain = build_chain()
+        chain = ChainUtil.build_chain()
 
         # all other checks
         self.check_abandoned_alters(chain)
@@ -722,10 +724,10 @@ class ResolveCommand(Command):
                     my_file.close()
                 sys.stderr.write("Error reading file '%s'\n\t=>%s\n" % (self.file, ex.message))
 
-            if not parse_direction(head) == 'up':
+            if not MetaDataUtil.parse_direction(head) == 'up':
                 sys.stderr.write("File can only be an up-alter: '%s'" % self.file)
 
-            refs = parse_meta(head)
+            refs = MetaDataUtil.parse_meta(head)
             if 'ref' in refs:
                 self.ref = refs['ref']
 
@@ -762,8 +764,8 @@ class ResolveCommand(Command):
         the chain
         """
         if not self.nodes:
-            files = get_alter_files()
-            self.nodes = build_soft_chain(files)
+            files = ChainUtil.get_alter_files()
+            self.nodes = ChainUtil.build_soft_chain(files)
 
         return self.nodes
 
@@ -948,7 +950,7 @@ class ListCommand(Command):
         list_normal  = options.list
         list_reverse = options.listReverse
 
-        list_tail = build_chain()
+        list_tail = ChainUtil.build_chain()
 
         self.__set_is_applied_flag(list_tail)
 
@@ -1018,7 +1020,7 @@ class UpCommand(Command):
         history = sorted(history, key=lambda h: h[0])
 
         # get current alter-chain
-        tail = build_chain()
+        tail = ChainUtil.build_chain()
         alter_list = [tail]
         if None in alter_list:
             alter_list.remove(None)
@@ -1114,7 +1116,7 @@ class DownCommand(Command):
         history = sorted(history, key=lambda h: h[0], reverse=True)
 
         # get current alter-chain
-        tail = build_chain()
+        tail = ChainUtil.build_chain()
         alter_list = [tail]
         if None in alter_list:
             alter_list.remove(None)
@@ -1249,7 +1251,7 @@ class GenSqlCommand(Command):
             sys.exit(1)
 
         refs = args
-        nodes = build_chain()
+        nodes = ChainUtil.build_chain()
         ref_nodes = []
 
         # validate valid refs
