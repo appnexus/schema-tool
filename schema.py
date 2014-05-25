@@ -3,14 +3,6 @@
 # File: schema
 # Author: John Murray <jmurray@appnexus.com>
 #
-# This is a utility file for working with DB alters in the root
-# folder which should include alters for (at time of writing):
-#   - api
-#   - audit
-#   - bidder
-#   - common
-#   - inventory_quality
-#
 # For more information on how to use the script, call with the '-h'
 # option.
 #
@@ -24,6 +16,9 @@ import subprocess
 import sys
 
 (v_major, v_minor, _, _, _) = sys.version_info
+if v_major != 2 or (v_major == 2 and v_minor != 7):
+    sys.stderr.write("Warning: Tool only tested against 2.7. Results may vary" +
+                     " with older versions.\n\n")
 if v_major == 2 and v_minor < 6:
     import simplejson as json
 else:
@@ -59,8 +54,8 @@ VERSION = "0.2.2"
 def main(config):
     """
     Determine what command is being called and dispatch it to the appropriate
-    handler. If the command is unknown or the '-h' flag has been given, display
-    the help file.
+    handler. If the command is unknown or the '-h' or '-v' flag has been given, 
+    display help-file or version-info, respectively.
     """
     commands = [
         "  new         Create a new alter",
@@ -94,10 +89,14 @@ def main(config):
     # check if the command given is valid and dispatch appropriately
     user_command = sys.argv[1]
     if user_command in [c['command'] for c in COMMANDS]:
+        # strip command-name from arguments
         sys.argv = sys.argv[1:]
+
+        # Create context and select handler and attempt to dispatch
+        context = CommandContext.via(config)
         handler = [c['handler'] for c in COMMANDS if c['command'] == user_command][0]
         try:
-            globals()[handler](config).run()
+            globals()[handler](context).run()
         except SystemExit:
             sys.exit(1)
         except EnvironmentError, er:
@@ -118,6 +117,7 @@ def main(config):
         parser.print_help()
 
 
+# Public Method
 def build_chain():
     """
     Walk the schemas directory and build the chain of alterations that should be run. Also
@@ -137,11 +137,13 @@ def build_chain():
     return list_tail
 
 
+# Public Method
 def get_alter_files():
     files = os.walk(ALTER_DIR).next()[2]
     return [f for f in files if FILENAME_STANDARD.search(f)]
 
 
+# Public Method
 def build_soft_chain(files):
     """
     Build a list of nodes "soft" linked. This means that each has an id
@@ -181,6 +183,7 @@ def build_soft_chain(files):
     return nodes
 
 
+# Private Method (used by: build_chain)
 def build_and_validate_linked_list(nodes):
     """
     Build a linked list and validate it's correctness given an array of
@@ -264,6 +267,7 @@ def build_and_validate_linked_list(nodes):
         return tails[0]
 
 
+# Public Method
 def parse_direction(head):
     """
     Given the entire head meta-data (an array of strings) parse out
@@ -280,6 +284,7 @@ def parse_direction(head):
     return direction
 
 
+# Private Method (used by parse_direction)
 def _parse_line_for_direction(line):
     """
     Given a single line, see if we can parse out the alter-direction (up/down
@@ -308,6 +313,7 @@ def _parse_line_for_direction(line):
         return None
 
 
+# Public Method
 def parse_meta(head):
     """
     Given the top two lines of the file, parse the meta-data and what have
@@ -327,6 +333,7 @@ def parse_meta(head):
     return refs
 
 
+# Private Method (used by: parse_meta)
 def parse_ref(line):
     """
     Parse out the ref, or backref, of the meta-data that is stored at the top
@@ -370,21 +377,43 @@ def load_config():
         sys.exit(1)
     return config
 
-def set_is_applied_flag(chain):
-    """
-    Sets a flag for each node in the chain whether it has been applied to the
-    database or not.
-    """
-    applied_alters = _DB.get_applied_alters()
-    tail = chain
-    while tail is not None:
-        if tail.id in applied_alters:
-            tail.is_applied = True
-        else:
-            tail.is_applied = False
-        tail = tail.backref
 
 # SUPPORT CLASSES
+class CommandContext:
+    """
+    Represents everything that a command-class could possibly need to do its
+    job. Including (but not limited to):
+      config
+      DB handles
+      VCS extensions (coming soon)
+      etc
+    """
+
+    @staticmethod
+    def via(config):
+        """
+        Construct a CommandContext from a config and setup all auxillary classes
+        for DBs, VCS extensions, etc.
+        """
+        db = None
+        if 'type' in config:
+            if config['type'] == 'postgres':
+                db = PostgresDb.new(config)
+            elif config['type'] == 'mysql':
+                db = MySQLDb.new(config)
+            else:
+                sys.stderr.write("Invalid database type in config. Only \
+                                  'postgres' and 'mysql' are allowed.")
+                sys.exit(1)
+        else:
+            db = MySQLDb.new(config)
+
+        return CommandContext(config, db)
+
+    def __init__(self, config, DB):
+        self.config = config
+        self.db = DB
+
 class SimpleNode:
     """
     Represents a simple node within the alter-chain. Just makes things
@@ -441,8 +470,10 @@ class Command(object):
     """
     The general command object. Does fun stuff...
     """
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, context):
+        self.context = context
+        self.config = context.config
+        self.db = context.db
         self.init_parser()
 
     def init_parser(self):
@@ -598,8 +629,8 @@ class CheckCommand(Command):
 
 
 class ResolveCommand(Command):
-    def __init__(self, config):
-        Command.__init__(self, config)
+    def __init__(self, context):
+        Command.__init__(self, context)
         self.nodes = None
         self.file = None
         self.ref = None
@@ -667,7 +698,7 @@ class ResolveCommand(Command):
 
         sys.stdout.write("\nRe-Checking...\n")
         sys.argv = [sys.argv[0]]
-        CheckCommand(self.config).run()
+        CheckCommand(self.context).run()
 
     def _file_exists(self):
         """
@@ -785,7 +816,7 @@ class ResolveCommand(Command):
             node = sub_chain.pop()
 
             # gen new ref
-            new_ref = (GenRefCommand(self.config)).gen_ref(i)
+            new_ref = (GenRefCommand(self.context)).gen_ref(i)
 
             # generate new file-names
             new_up_filename = self._rename_file(filename=node.filename, ref=new_ref)
@@ -919,7 +950,7 @@ class ListCommand(Command):
 
         list_tail = build_chain()
 
-        set_is_applied_flag(list_tail)
+        self.__set_is_applied_flag(list_tail)
 
         if list_tail is None:
             sys.stdout.write("No alters found\n")
@@ -930,6 +961,20 @@ class ListCommand(Command):
                 print("\n".join(normal_str))
             elif list_normal:
                 print("%s" % list_tail)
+
+    def __set_is_applied_flag(self, chain):
+        """
+        Sets a flag for each node in the chain whether it has been applied to the
+        database or not.
+        """
+        applied_alters = self.db.get_applied_alters()
+        tail = chain
+        while tail is not None:
+            if tail.id in applied_alters:
+                tail.is_applied = True
+            else:
+                tail.is_applied = False
+            tail = tail.backref
 
 
 class UpCommand(Command):
@@ -966,10 +1011,10 @@ class UpCommand(Command):
         """
         (options, args) = self.parser.parse_args()
 
-        CheckCommand(self.config).run(inline=True)
+        CheckCommand(self.context).run(inline=True)
 
         # get history
-        history = _DB.get_commit_history()
+        history = self.db.get_commit_history()
         history = sorted(history, key=lambda h: h[0])
 
         # get current alter-chain
@@ -1005,7 +1050,7 @@ class UpCommand(Command):
                     if not options.force:
                         sys.exit(1)
                 alter = alters[0]
-                _DB.run_down(alter)
+                self.db.run_down(alter)
 
         # do alters that are in the alter-chain and have not
         # ben run yet
@@ -1023,7 +1068,7 @@ class UpCommand(Command):
                     i = (max - 1)
 
             i += 1
-            _DB.run_up(alter=alter,
+            self.db.run_up(alter=alter,
                       force=options.force,
                       verbose=options.verbose)
 
@@ -1056,6 +1101,8 @@ class DownCommand(Command):
         """
         (options, args) = self.parser.parse_args()
 
+        CheckCommand(self.context).run(inline=True)
+
         # check validity of options (can't really do this in OptionParser AFAIK)
         if len(args) == 0 and options.N is None:
             sys.stderr.write("Error: must specify either argument or number of down-alters to run\n\n")
@@ -1063,7 +1110,7 @@ class DownCommand(Command):
             sys.exit(1)
 
         # get current history
-        history = _DB.get_commit_history()
+        history = self.db.get_commit_history()
         history = sorted(history, key=lambda h: h[0], reverse=True)
 
         # get current alter-chain
@@ -1103,14 +1150,14 @@ class DownCommand(Command):
                 # error depending on the force and verbose flags (missing alter to run)
                 if options.force:
                     sys.stderr.write("Warning: missing alter: %s\n" % alter_id)
-                    _DB.remove_commit(ref=alter_id)
+                    self.db.remove_commit(ref=alter_id)
                 else:
                     sys.stderr.write("error, missing alter: %s\n" % alter_id)
                     sys.exit(1)
 
         # run all the down-alters that we have collected
         for alter_to_run in down_alters_to_run:
-            _DB.run_down(alter=alter_to_run,
+            self.db.run_down(alter=alter_to_run,
                         force=options.force,
                         verbose=options.verbose)
 
@@ -1139,7 +1186,7 @@ class RebuildCommand(Command):
         if options.verbose:
             sys.argv.append('--verbose')
         sys.argv.append('all')
-        DownCommand(self.config).run()
+        DownCommand(self.context).run()
 
         sys.stdout.write("\nBringing all the way back up\n")
         sys.argv = [sys.argv[0]]
@@ -1147,7 +1194,7 @@ class RebuildCommand(Command):
             sys.argv.append('--force')
         if options.verbose:
             sys.argv.append('--verbose')
-        UpCommand(self.config).run()
+        UpCommand(self.context).run()
 
 
 class GenRefCommand(Command):
@@ -1295,21 +1342,9 @@ class InitCommand(Command):
         Initialize everything if this is the first time that the tool has been run
         """
         (options, args) = self.parser.parse_args()
-        _DB.init(force=options.force)
+        self.db.init(force=options.force)
 
 # Start the script
 if __name__ == "__main__":
     config = load_config()
-    global _DB
-    if 'type' in config:
-        if config['type'] == 'postgres':
-            _DB = PostgresDb.new(config)
-        elif config['type'] == 'mysql':
-            _DB = MySQLDb.new(config)
-        else:
-            sys.stderr.write('Invalid database type in config. Only \'postgres\' and \'mysql\' \
-            are allowed.')
-            sys.exit(1)
-    else:
-        _DB = MySQLDb.new(config)
     main(config)
