@@ -37,11 +37,8 @@ from traceback import print_exc
 
 from db import MySQLDb, PostgresDb
 
-ISSUE_URL = "http://github.com/appnexus/schema-tool/issues"
-
-#ALTER_DIR = os.path.dirname(os.path.abspath(__file__)) + '/../'
 ALTER_DIR = os.path.abspath(os.path.curdir) + '/'
-
+CONFIG_FILE = os.path.join(ALTER_DIR, 'config.json')
 COMMANDS = [
     {'command': 'new',      'handler': 'NewCommand'},
     {'command': 'check',    'handler': 'CheckCommand'},
@@ -54,11 +51,9 @@ COMMANDS = [
     {'command': 'init',     'handler': 'InitCommand'},
     {'command': 'gen-sql',  'handler': 'GenSqlCommand'}
 ]
-
-#CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
-CONFIG_FILE = os.path.join(ALTER_DIR, 'config.json')
-
 FILENAME_STANDARD = re.compile('^\d{12}-.+-(up|down)\.sql$')
+ISSUE_URL = "http://github.com/appnexus/schema-tool/issues"
+VERSION = "0.2.2"
 
 
 def main(config):
@@ -78,17 +73,23 @@ def main(config):
         "  gen-sql     Generate SQL for a given reference, including revision-history alter(s)",
         "  resolve     Resolve a divergent-branch conflict (found by 'check' command)",
         "  init        Initialize new project",
+        "  version     Shows current version of tool",
         "  help        Show this help message and exit"
     ]
     usage = "schema command [options]\n\nCommands:\n" + ("\n".join(commands))
     parser = OptionParser(usage=usage)
 
-    if len(sys.argv) == 1 or sys.argv[1] in ['-h', '--help', 'help']:
-        if len(sys.argv) < 2:
-            sys.stderr.write("Error: No commands or options given, view -h for each\n" +
-                             "       command for more information\n\n")
-        parser.print_help()
+    if len(sys.argv) == 1:
+        sys.stderr.write("Error: No commands or options given, view -h for each\n" +
+                         "       command for more information\n\n")
+        parser.print_help();
         sys.exit(1)
+    if sys.argv[1] in ['-v', '--version', 'version']:
+        sys.stderr.write('Version: %s\n' % VERSION)
+        sys.exit(0)
+    if sys.argv[1] in ['-h', '--help', 'help']:
+        parser.print_help()
+        sys.exit(0)
 
     # check if the command given is valid and dispatch appropriately
     user_command = sys.argv[1]
