@@ -31,7 +31,11 @@ your path.You can get started with the tool simply by doing
     mkdir -p ~/bin
     cd ~/bin
     git clone REPO_URL schema-tool
+
     echo 'export PATH="$HOME/bin/schema-tool:$PATH"' >> ~/.bashrc
+    # or
+    echo 'alias schema="$HOME/bin/schema-tool/schema.py"' >> ~/.bashrc
+
     source ~/.bashrc
 
 If I am creating a new project I can simply do the following:
