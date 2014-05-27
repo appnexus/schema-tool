@@ -30,25 +30,9 @@ from subprocess import PIPE
 from time import time
 from traceback import print_exc
 
+# loal imports
 from db import MySQLDb, PostgresDb
-
-ALTER_DIR = os.path.abspath(os.path.curdir) + '/'
-CONFIG_FILE = os.path.join(ALTER_DIR, 'config.json')
-COMMANDS = [
-    {'command': 'new',      'handler': 'NewCommand'},
-    {'command': 'check',    'handler': 'CheckCommand'},
-    {'command': 'list',     'handler': 'ListCommand'},
-    {'command': 'up',       'handler': 'UpCommand'},
-    {'command': 'down',     'handler': 'DownCommand'},
-    {'command': 'rebuild',  'handler': 'RebuildCommand'},
-    {'command': 'gen-ref',  'handler': 'GenRefCommand'},
-    {'command': 'resolve',  'handler': 'ResolveCommand'},
-    {'command': 'init',     'handler': 'InitCommand'},
-    {'command': 'gen-sql',  'handler': 'GenSqlCommand'}
-]
-FILENAME_STANDARD = re.compile('^\d{12}-.+-(up|down)\.sql$')
-ISSUE_URL = "http://github.com/appnexus/schema-tool/issues"
-VERSION = "0.2.2"
+from constants import *
 
 
 def main(config):
@@ -80,7 +64,7 @@ def main(config):
         parser.print_help();
         sys.exit(1)
     if sys.argv[1] in ['-v', '--version', 'version']:
-        sys.stderr.write('Version: %s\n' % VERSION)
+        sys.stderr.write('Version: %s\n' % Constants.VERSION)
         sys.exit(0)
     if sys.argv[1] in ['-h', '--help', 'help']:
         parser.print_help()
@@ -88,13 +72,13 @@ def main(config):
 
     # check if the command given is valid and dispatch appropriately
     user_command = sys.argv[1]
-    if user_command in [c['command'] for c in COMMANDS]:
+    if user_command in [c['command'] for c in Constants.COMMANDS]:
         # strip command-name from arguments
         sys.argv = sys.argv[1:]
 
         # Create context and select handler and attempt to dispatch
         context = CommandContext.via(config)
-        handler = [c['handler'] for c in COMMANDS if c['command'] == user_command][0]
+        handler = [c['handler'] for c in Constants.COMMANDS if c['command'] == user_command][0]
         try:
             globals()[handler](context).run()
         except SystemExit:
@@ -102,13 +86,13 @@ def main(config):
         except EnvironmentError, er:
             sys.stderr.write(
                 "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
-                    ISSUE_URL))
+                    Constants.ISSUE_URL))
             sys.stderr.write("Error: %s, %s\n\n" % (er.errno, er.strerror))
             sys.exit(1)
         except Exception, ex:
             sys.stderr.write(
                 "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
-                    ISSUE_URL))
+                    Constants.ISSUE_URL))
             sys.stderr.write("Error: %s\n\n" % ex)
             print_exc()
             sys.exit(1)
@@ -117,6 +101,7 @@ def main(config):
         parser.print_help()
 
 
+    
 class ChainUtil(object):
     @classmethod
     def build_chain(cls):
@@ -140,8 +125,8 @@ class ChainUtil(object):
 
     @classmethod
     def get_alter_files(cls):
-        files = os.walk(ALTER_DIR).next()[2]
-        return [f for f in files if FILENAME_STANDARD.search(f)]
+        files = os.walk(Constants.ALTER_DIR).next()[2]
+        return [f for f in files if Constants.FILENAME_STANDARD.search(f)]
 
 
     @classmethod
@@ -157,14 +142,14 @@ class ChainUtil(object):
         nodes = []
     
         for f in files:
-            if not FILENAME_STANDARD.search(f):
+            if not Constants.FILENAME_STANDARD.search(f):
                 continue
     
             try:
-                my_file = open(os.path.join(ALTER_DIR, f))
+                my_file = open(os.path.join(Constants.ALTER_DIR, f))
                 head = list(islice(my_file, 3))
             except OSError, ex:
-                sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(ALTER_DIR, f), ex.message))
+                sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, f), ex.message))
                 sys.exit(1)
     
             if not MetaDataUtil.parse_direction(head) == 'up':
@@ -367,7 +352,7 @@ def load_config():
     Read the config file and return the values
     """
     try:
-        config_file = open(CONFIG_FILE, 'r')
+        config_file = open(Constants.CONFIG_FILE, 'r')
         try:
             config = json.load(config_file)
         except ValueError, ex:
@@ -375,7 +360,7 @@ def load_config():
             sys.exit(1)
     except IOError, ex:
         sys.stderr.write("Error reading config: %s\n" % ex.strerror)
-        sys.stderr.write("Tried reading: %s\n" % CONFIG_FILE)
+        sys.stderr.write("Tried reading: %s\n" % Constants.CONFIG_FILE)
         sys.exit(1)
     return config
 
@@ -459,9 +444,9 @@ class SimpleNode:
 
     def abs_filename(self, direction='up'):
         if direction == 'up':
-            return os.path.join(ALTER_DIR, self.filename)
+            return os.path.join(Constants.ALTER_DIR, self.filename)
         elif direction == 'down':
-            return os.path.join(ALTER_DIR, self.down_filename())
+            return os.path.join(Constants.ALTER_DIR, self.down_filename())
         else:
             sys.stderr.write("%s is not a valid alter-direction" % direction)
             return None
@@ -516,27 +501,27 @@ class NewCommand(Command):
 
         up_filename = filename + '-up.sql'
         try:
-            alter_file = open(os.path.join(ALTER_DIR, up_filename), 'w')
+            alter_file = open(os.path.join(Constants.ALTER_DIR, up_filename), 'w')
             alter_file.write("-- direction: up\n")
             if alter_list_tail is not None:
                 alter_file.write("-- backref: %s\n" % alter_list_tail.id)
             alter_file.write("-- ref: %s\n" % timestamp)
             alter_file.write("\n\n\n")
         except OSError, ex:
-            sys.stderr.write("Error writing file '%s'\n\t=>%s\n" % (os.path.join(ALTER_DIR, up_filename), ex.message))
+            sys.stderr.write("Error writing file '%s'\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
             sys.exit(1)
         sys.stdout.write("Created file: %s\n" % up_filename)
 
         down_filename = filename + '-down.sql'
         try:
-            alter_file = open(os.path.join(ALTER_DIR, down_filename), 'w')
+            alter_file = open(os.path.join(Constants.ALTER_DIR, down_filename), 'w')
             alter_file.write("-- direction: down\n")
             if alter_list_tail is not None:
                 alter_file.write("-- backref: %s\n" % alter_list_tail.id)
             alter_file.write("-- ref: %s\n" % timestamp)
             alter_file.write("\n\n\n")
         except OSError, ex:
-            sys.stderr.write("Error writing file '%s'\n\t=>%s\n" % (os.path.join(ALTER_DIR, up_filename), ex.message))
+            sys.stderr.write("Error writing file '%s'\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
             sys.exit(1)
         sys.stdout.write("Created file: %s\n" % down_filename)
 
@@ -601,13 +586,13 @@ class CheckCommand(Command):
         for file in self.files:
             if up_alter.search(file) is not None:
                 down_file = up_alter.sub('-down.sql', file)
-                if not os.path.exists(os.path.join(ALTER_DIR, down_file)):
+                if not os.path.exists(os.path.join(Constants.ALTER_DIR, down_file)):
                     sys.stderr.write("No down-file found for '%s', expected '%s'\n" % (
                         file, down_file))
                     sys.exit(1)
             elif down_alter.search(file) is not None:
                 up_file = down_alter.sub('-up.sql', file)
-                if not os.path.exists(os.path.join(ALTER_DIR, up_file)):
+                if not os.path.exists(os.path.join(Constants.ALTER_DIR, up_file)):
                     sys.stderr.write("No up-file found for '%s', expected '%s'\n" % (
                         file, up_file))
                     sys.exit(1)
@@ -627,7 +612,7 @@ class CheckCommand(Command):
         """
         Check that the givenfilename meets our standards.
         """
-        return FILENAME_STANDARD.search(filename) is not None
+        return Constants.FILENAME_STANDARD.search(filename) is not None
 
 
 class ResolveCommand(Command):
@@ -709,8 +694,8 @@ class ResolveCommand(Command):
         """
         file_found = True
         if not os.path.exists(self.file):
-            if os.path.exists(os.path.join(ALTER_DIR, self.file)):
-                self.file = os.path.join(ALTER_DIR, self.file)
+            if os.path.exists(os.path.join(Constants.ALTER_DIR, self.file)):
+                self.file = os.path.join(Constants.ALTER_DIR, self.file)
             else:
                 file_found = False
 
@@ -743,7 +728,7 @@ class ResolveCommand(Command):
         found_ref = False
         for node in self.nodes:
             if node.id == self.ref:
-                self.file = os.path.join(ALTER_DIR, node.filename)
+                self.file = os.path.join(Constants.ALTER_DIR, node.filename)
                 found_ref = True
                 break
 
@@ -863,8 +848,8 @@ class ResolveCommand(Command):
         found_ref     = False
         found_backref = False
 
-        old_filename = os.path.join(ALTER_DIR, old_filename)
-        new_filename = os.path.join(ALTER_DIR, new_filename)
+        old_filename = os.path.join(Constants.ALTER_DIR, old_filename)
+        new_filename = os.path.join(Constants.ALTER_DIR, new_filename)
 
         # create the new file
         try:
@@ -1302,13 +1287,13 @@ class GenSqlCommand(Command):
             try:
                 sql_file = None
                 if options.down_alter:
-                    sql_file = open(os.path.join(ALTER_DIR, node.down_filename()))
+                    sql_file = open(os.path.join(Constants.ALTER_DIR, node.down_filename()))
                 else:
-                    sql_file = open(os.path.join(ALTER_DIR, node.filename))
+                    sql_file = open(os.path.join(Constants.ALTER_DIR, node.filename))
                 sql = sql_file.read()
                 sql += "\n\n"
             except OSError, ex:
-                sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(ALTER_DIR, node.filename), ex))
+                sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, node.filename), ex))
                 if 'sql_file' in locals():
                     sql_file.close()
                 sys.exit(1)
