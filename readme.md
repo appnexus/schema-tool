@@ -28,42 +28,48 @@ your path.You can get started with the tool simply by doing
 > Note: Unlike previous versions, the tool does not have to be located with(in) the
 > directory containing the alters you are working with.
 
-    mkdir -p ~/bin
-    cd ~/bin
-    git clone REPO_URL schema-tool
+```shell
+mkdir -p ~/bin
+cd ~/bin
+git clone REPO_URL schema-tool
 
-    echo 'export PATH="$HOME/bin/schema-tool:$PATH"' >> ~/.bashrc
-    # or
-    echo 'alias schema="$HOME/bin/schema-tool/schema.py"' >> ~/.bashrc
+echo 'export PATH="$HOME/bin/schema-tool:$PATH"' >> ~/.bashrc
+# or
+echo 'alias schema="$HOME/bin/schema-tool/schema.py"' >> ~/.bashrc
 
-    source ~/.bashrc
+source ~/.bashrc
+```
 
 If I am creating a new project I can simply do the following:
 
-    mkdir my-schemas
-    cd my-schemas/
-    git init
+```shell
+mkdir my-schemas
+cd my-schemas/
+git init
 
-    cp ~/bin/schema-tool/conf/config.json.mysql-template config.json
-    # or
-    cp ~/bin/schema-tool/conf/config.json.pgsql-template config.json
+cp ~/bin/schema-tool/conf/config.json.mysql-template config.json
+# or
+cp ~/bin/schema-tool/conf/config.json.pgsql-template config.json
 
-    vim config.json #edit appropriately
+vim config.json #edit appropriately
+```
 
 
 + __ToDo__: add the real repo URL when this is published to github
 
 Take a look at the mysql template config file and you'll see
 
-    {
-        "username": "root",
-        "password": "root",
-        "host": "localhost",
-        "revision_db_name": "revision",
-        "history_table_name": "history",
-        "port": 3306,
-        "type": "mysql"
-    }
+```json
+{
+    "username": "root",
+    "password": "root",
+    "host": "localhost",
+    "revision_db_name": "revision",
+    "history_table_name": "history",
+    "port": 3306,
+    "type": "mysql"
+}
+```
 
 
 It should be pretty self explanatory except for the revision db and the history table. This is
@@ -74,51 +80,59 @@ Once you have this setup, you are ready to take a tour of the tool and create yo
 alter. You can find all the commands supported by the tool by reading the help-file, which
 you can get to via `schema -h`. You should see the following:
 
-    Usage: schema command [options]
+```text
+Usage: schema command [options]
 
-    Commands:
-      new         Create a new alter
-      check       Check that all back-refs constitute a valid chain
-      list        List the current alter-chain
-      up          Bring up to particular revision
-      down        Roll back to a particular revision
-      rebuild     Run the entire database down and back up (hard refresh)
-      gen-ref     Generate new file-ref
-      gen-sql     Generate SQL for a given reference, including revision-history alter(s)
-      resolve     Resolve a divergent-branch conflict (found by 'check' command)
-      init        Initialize new project
-      help        Show this help message and exit
-    
-    Options:
-      -h, --help  show this help message and exit
+Commands:
+  new         Create a new alter
+  check       Check that all back-refs constitute a valid chain
+  list        List the current alter-chain
+  up          Bring up to particular revision
+  down        Roll back to a particular revision
+  rebuild     Run the entire database down and back up (hard refresh)
+  gen-ref     Generate new file-ref
+  gen-sql     Generate SQL for a given reference, including revision-history alter(s)
+  resolve     Resolve a divergent-branch conflict (found by 'check' command)
+  init        Initialize new project
+  help        Show this help message and exit
+
+Options:
+  -h, --help  show this help message and exit
+```
 
 Additionally each command also has it's own help file. For example, if you wanted to see what
 options are available to you when running an alter, you can could `schema up -h` and see
 
-    Usage: schema up [options] [ref]
+```text
+Usage: schema up [options] [ref]
 
-    Arguments
-      ref               Rn all alters up to, and including the ref given
+Arguments
+  ref               Rn all alters up to, and including the ref given
 
-    Options:
-      -h, --help        show this help message and exit
-      -n N, --number=N  Run N number of up-alters from current state - overrides
-                        arguments
-      -f, --force       Continue running up-alters even if an error has occurred
-      -v, --verbose     Output verbose error-messages when used with -f option if
-                        errors are encountered
+Options:
+  -h, --help        show this help message and exit
+  -n N, --number=N  Run N number of up-alters from current state - overrides
+                    arguments
+  -f, --force       Continue running up-alters even if an error has occurred
+  -v, --verbose     Output verbose error-messages when used with -f option if
+                    errors are encountered
+```
                         
 To get started and create our first file, we can simply run
 
-    schema init
-    schema new -f init
+```shell
+schema init
+schema new -f init
+```
     
 The `init` will take care of setting up the `revision` DB and `history` table (or whatever you
 configured them to be) and any janitorial tasks. The `new` will create an up and a down-file 
 that will look something like this
 
-    137823105930-init-down.sql
-    137823105930-init-up.sql
+```text
+137823105930-init-down.sql
+137823105930-init-up.sql
+```
     
 The number at the front is the identifier that is used to keep the alter-chain in line (see next
 section on understanding the chain). We can now edit the files (including whatever alter you have)
@@ -137,16 +151,21 @@ specifies that the parent alter should be applied before the child alter. This c
 linked list where the tail is the first alter to be run and the head is the last alter to be 
 run.
 
-    A <----- B <----- C <----- D <----- E <----- F
+```text
+A <----- B <----- C <----- D <----- E <----- F
+```
  
 A valid alter-chain does not have any branching such that a parent has multiple children. 
 This can arise in situations where you might have created a seperate feature-branch in your 
 version control system and merged it back to the mainline after some time of development in
 which the mainline branch had advanced in the interim:
 
-    A <----- B <----- C  <----- F
-                      ^\
-                        \ <----- D <----- E
+```text
+A <----- B <----- C  <----- F
+                  ^\
+                    \ <----- D <----- E
+```
+
 The `check` command will alert you to any inconsistencies in your alter chain like that which
 is defined above. The `resolve` command will help you resolve such issues if they are found.
 More on that later.
@@ -155,11 +174,13 @@ I should also mention that each node in the alter-chain is actually a pair of al
 One item in the pair is the up alter and the other item is the down alter. The actual structure 
 would look like:
 
-    Up:    A <----- B <----- C <----- D <----- E <----- F
-           ∧        ∧        ∧        ∧        ∧        ∧
-           |        |        |        |        |        |
-           ∨        ∨        ∨        ∨        ∨        ∨
-    Down:  A <----- B <----- C <----- D <----- E <----- F
+```text
+Up:    A <----- B <----- C <----- D <----- E <----- F
+       ∧        ∧        ∧        ∧        ∧        ∧
+       |        |        |        |        |        |
+       ∨        ∨        ∨        ∨        ∨        ∨
+Down:  A <----- B <----- C <----- D <----- E <----- F
+```
 
 The alters are given refs, rather than incremental numbers, because it makes things a 
 little easier to track within the DB in terms of what has been applied. When working with 
@@ -191,7 +212,9 @@ feature branch. The `check` command will tell you where the branch occurs and li
 alters that are in question. If you know which alter is at fault (typically the new alter)
 then you can simply run
 
-    schema resolve OFFENDING_ALTER_HASH
+```shell
+schema resolve OFFENDING_ALTER_HASH
+```
 
 This will move the offending alter (and any alters that come after it in the sub-chain)
 to the end of the alter-chain. One thing to note is that if you resolve the incorrect
