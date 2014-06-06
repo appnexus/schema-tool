@@ -31,7 +31,7 @@ your path.You can get started with the tool simply by doing
 ```shell
 mkdir -p ~/bin
 cd ~/bin
-git clone REPO_URL schema-tool
+git clone git@github.com:appnexus/schema-tool.git schema-tool
 
 echo 'export PATH="$HOME/bin/schema-tool:$PATH"' >> ~/.bashrc
 # or
@@ -54,8 +54,6 @@ cp ~/bin/schema-tool/conf/config.json.pgsql-template config.json
 vim config.json #edit appropriately
 ```
 
-
-+ __ToDo__: add the real repo URL when this is published to github
 
 Take a look at the mysql template config file and you'll see
 
@@ -252,7 +250,6 @@ open up an issue for discussion. If it is a fix for a bug or everyone agrees tha
 a useful feature, then submit your pull request. Make sure that your pull request's commit message
 uses one of the [appropriate identifiers][4] to link the pull request to the issue.
 
-__ToDo__: Update link for current contributors
 [Current contributors][5]
 
 ## License
@@ -266,4 +263,4 @@ __ToDo__: Determine what license is appropriate
   [2]: https://code.google.com/p/gerrit/
   [3]: https://github.com/psycopg/psycopg2
   [4]: https://github.com/blog/1386-closing-issues-via-commit-messages
-  [5]: #
+  [5]: https://github.com/appnexus/schema-tool/graphs/contributors
