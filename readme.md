@@ -266,4 +266,4 @@ __ToDo__: Determine what license is appropriate
   [2]: https://code.google.com/p/gerrit/
   [3]: https://github.com/psycopg/psycopg2
   [4]: https://github.com/blog/1386-closing-issues-via-commit-messages
-  [5]: #
+  [5]: https://github.com/appnexus/schema-tool/graphs/contributors
