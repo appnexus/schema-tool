@@ -72,7 +72,7 @@ Take a look at the mysql template config file and you'll see
 ```
 
 
-It should be pretty self explanatory except for the revision db and the history table. This is
+It should be pretty self-explanatory except for the revision db and the history table. This is
 where the tool is going to keep track of what alters have been ran. Feel free to choose whatever
 names you like. Do know that the tool will take care of creating and DB and table.
 
@@ -100,8 +100,8 @@ Options:
   -h, --help  show this help message and exit
 ```
 
-Additionally each command also has it's own help file. For example, if you wanted to see what
-options are available to you when running an alter, you can could `schema up -h` and see
+Additionally each command also has its own help file. For example, if you wanted to see what
+options are available to you when applying an alter, you can could `schema up -h` and see
 
 ```text
 Usage: schema up [options] [ref]
@@ -136,7 +136,7 @@ that will look something like this
     
 The number at the front is the identifier that is used to keep the alter-chain in line (see next
 section on understanding the chain). We can now edit the files (including whatever alter you have)
-and running them against your local DB by running `schema up`. 
+and applying them against your local DB by running `schema up`. 
 
 Now you're up and running! You can add more files with `schema new` and control the state of your
 DB with `up`, `down`, and `rebuild` commands.
@@ -146,7 +146,7 @@ DB with `up`, `down`, and `rebuild` commands.
 To understand how the tool does it's job, you have to understand how it thinks about alters. 
 When working with alters, it's easy to have dependencies between alters such that order is 
 very important. The way that the tool addresses this is by giving each alter a unique reference 
-and each atler specifies it's parent alter by their references. The parent-relationship 
+and each alter specifies it's parent alter by their references. The parent-relationship 
 specifies that the parent alter should be applied before the child alter. This creates a singly 
 linked list where the tail is the first alter to be run and the head is the last alter to be 
 run.
@@ -156,7 +156,7 @@ A <----- B <----- C <----- D <----- E <----- F
 ```
  
 A valid alter-chain does not have any branching such that a parent has multiple children. 
-This can arise in situations where you might have created a seperate feature-branch in your 
+This can arise in situations where you might have created a separate feature-branch in your 
 version control system and merged it back to the mainline after some time of development in
 which the mainline branch had advanced in the interim:
 
@@ -184,7 +184,7 @@ Down:  A <----- B <----- C <----- D <----- E <----- F
 
 The alters are given refs, rather than incremental numbers, because it makes things a 
 little easier to track within the DB in terms of what has been applied. When working with 
-multiple branches, the incremental numbers may not reprsent the correct set of alters that 
+multiple branches, the incremental numbers may not represent the correct set of alters that 
 have been applied to the DB. This is important when updating that we know we are up to date 
 with the correct alters.
 
