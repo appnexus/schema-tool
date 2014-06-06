@@ -1,0 +1,99 @@
+# stdlib imports
+from optparse import OptionParser
+import os
+import sys
+from time import time
+
+# local imports
+from command import Command
+from check import CheckCommand
+from constants import Constants
+from util import ChainUtil
+
+class DownCommand(Command):
+    def init_parser(self):
+        usage = "schema down [options] [all|base|ref]" \
+                "\n\n" \
+                "Arguments" \
+                "\n  all               Undo all alters" \
+                "\n  base              Undo all but the initial alter" \
+                "\n  ref               Undo all previously run alters up to, and including, the ref given"
+        parser = OptionParser(usage=usage)
+        parser.add_option('-n', '--number',
+                          action='store', dest='N',
+                          help='Run N number of down-alters from current state - overrides arguments')
+        parser.add_option('-f', '--force',
+                          action='store_true', dest='force', default=False,
+                          help='Continue running down-alters even if an error has occurred')
+        parser.add_option('-v', '--verbose',
+                          action='store_true', dest='verbose', default=False,
+                          help='Output verbose error-messages when used with -f option if errors are encountered')
+        self.parser = parser
+
+    def run(self):
+        """
+        Analogous to what the up_command definition does, but in reverse.
+        """
+        (options, args) = self.parser.parse_args()
+
+        CheckCommand(self.context).run(inline=True)
+
+        # check validity of options (can't really do this in OptionParser AFAIK)
+        if len(args) == 0 and options.N is None:
+            sys.stderr.write("Error: must specify either argument or number of down-alters to run\n\n")
+            self.parser.print_help()
+            sys.exit(1)
+
+        # get current history
+        history = self.db.get_commit_history()
+        history = sorted(history, key=lambda h: h[0], reverse=True)
+
+        # get current alter-chain
+        tail = ChainUtil.build_chain()
+        alter_list = [tail]
+        if None in alter_list:
+            alter_list.remove(None)
+        while tail is not None and tail.backref is not None:
+            tail = tail.backref
+            alter_list.append(tail)
+
+        # collect the down-alters that we need to run depending on the command line
+        # options and arguments that were given
+        down_alters_to_run = []
+        max = int(options.N or len(history))
+        i = 0
+        for (id, alter_id, datetime) in history:
+            if i == max:
+                break
+            if len(args) > 0:
+                if args[0] == 'base':
+                    if i == (max - 1):
+                        break
+                elif args[0] == 'all':
+                    pass
+                else:
+                    target_rev = args[0]
+                    if target_rev == alter_id:
+                        i = (max - 1)
+
+            i += 1
+            alters = [a for a in alter_list if a.id == alter_id]
+            if len(alters) > 0:
+                alter = alters[0]
+                down_alters_to_run.append(alter)
+            else:
+                # error depending on the force and verbose flags (missing alter to run)
+                if options.force:
+                    sys.stderr.write("Warning: missing alter: %s\n" % alter_id)
+                    self.db.remove_commit(ref=alter_id)
+                else:
+                    sys.stderr.write("error, missing alter: %s\n" % alter_id)
+                    sys.exit(1)
+
+        # run all the down-alters that we have collected
+        for alter_to_run in down_alters_to_run:
+            self.db.run_down(alter=alter_to_run,
+                        force=options.force,
+                        verbose=options.verbose)
+
+        sys.stdout.write("Downgraded\n")
