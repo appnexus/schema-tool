@@ -212,12 +212,14 @@ class ResolveCommand(Command):
                 old_filename=node.filename,
                 new_filename=new_up_filename,
                 new_ref=new_ref,
-                new_backref=tail.id)
+                new_backref=tail.id,
+                direction='up')
             self._relocate_files(
                 old_filename=node.down_filename(),
                 new_filename=new_down_filename,
                 new_ref=new_ref,
-                new_backref=tail.id)
+                new_backref=tail.id,
+                direction='down')
 
             # update tail = node
             node.id = new_ref
@@ -235,7 +237,7 @@ class ResolveCommand(Command):
         r = re.compile('^(\d{12})')
         return r.sub(ref, filename)
 
-    def _relocate_files(self, old_filename, new_filename, new_ref, new_backref):
+    def _relocate_files(self, old_filename, new_filename, new_ref, new_backref, direction):
         """
         Move the file on disk. Not really a big task, but it might be nice in the
         future to go ahead and do a git mv command for the user.
@@ -243,16 +245,16 @@ class ResolveCommand(Command):
         is_backref_line = re.compile('--\s*backref\s*:\s*(\d+)')
         is_ref_line     = re.compile('--\s*ref\s*:\s*(\d+)')
 
-        found_ref     = False
-        found_backref = False
+        found_ref          = False
+        found_backref      = False
 
-        old_filename = os.path.join(Constants.ALTER_DIR, old_filename)
-        new_filename = os.path.join(Constants.ALTER_DIR, new_filename)
+        old_filename_with_dir = os.path.join(Constants.ALTER_DIR, old_filename)
+        new_filename_with_dir = os.path.join(Constants.ALTER_DIR, new_filename)
 
         # create the new file
         try:
-            new_file = open(new_filename, 'w')
-            old_file = open(old_filename, 'r')
+            new_file = open(new_filename_with_dir, 'w')
+            old_file = open(old_filename_with_dir, 'r')
             lines = old_file.readlines()
             for line in lines:
                 if not found_ref and is_ref_line.match(line) is not None:
@@ -267,7 +269,7 @@ class ResolveCommand(Command):
             new_file.close()
             old_file.close()
         except OSError, ex:
-            sys.stderr.write("Error renaming file '%s'\n\t=>%s\n" % (old_filename, ex.message))
+            sys.stderr.write("Error renaming file '%s'\n\t=>%s\n" % (old_filename_with_dir, ex.message))
             if 'new_file' in locals():
                 new_file.close()
             if 'old_file' in locals():
@@ -275,33 +277,53 @@ class ResolveCommand(Command):
 
         # delete the old file
         try:
-            os.remove(old_filename)
+            os.remove(old_filename_with_dir)
         except OSError, ex:
-            sys.stderr.write("Could not delete file '%s'\n\t=>%s\n" % (old_filename, ex.message))
+            sys.stderr.write("Could not delete file '%s'\n\t=>%s\n" % (old_filename_with_dir, ex.message))
+
+        # create the new static file
+        if self.config.get('static_alter_dir'):
+            old_static_filename = os.path.join(self.config['static_alter_dir'], old_filename)
+            new_static_filename = os.path.join(self.config['static_alter_dir'], new_filename)
+
+            content = open(new_filename_with_dir).read()
+            if direction == 'up':
+                rev_query = self.db.get_append_commit_query(new_ref)
+            else:
+                assert direction == 'down'
+                rev_query = self.db.get_remove_commit_query(new_ref)
+            def replace_fn(matchobj):
+                result = ('-- rev query:\n%s\n-- end rev query\n' % rev_query.encode('utf-8'))
+                return matchobj.group(0) + result
+            content = re.sub("-- ref: %s\n" % new_ref, replace_fn, content)
+            f = open(new_static_filename, 'w')
+            f.write(content)
+            f.close()
+
+            # delete the old static file, and add the new static file.
+            static_file_commands = [
+                ['git', 'rm', '--ignore-unmatch', old_static_filename],
+                ['git', 'add', new_static_filename],
+            ]
+        else:
+            static_file_commands = []
 
         # perform Git updates (add and rm -> rename in essence)
+        commands = [
+            ['git', 'rm', '%s' % old_filename_with_dir],
+            ['git', 'add', '%s' % new_filename_with_dir],
+        ] + static_file_commands
+
         try:
-            command = ['git', 'rm', '%s' % old_filename]
-            print(old_filename)
-            proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            proc.wait()
+            for cmd in commands:
+                proc = subprocess.Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = proc.communicate()
 
-            if not proc.returncode == 0 and proc.stderr is not None:
-                sys.stderr.write("Error")
-                sys.stderr.write("\n----------------------\n")
-                sys.stderr.write(proc.stderr)
-                sys.stderr.write("\n----------------------\n")
-                sys.stderr.write("\n")
-
-            command = ['git', 'add', '%s' % new_filename]
-            proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            proc.wait()
-
-            if not proc.returncode == 0 and proc.stderr is not None:
-                sys.stderr.write("Error")
-                sys.stderr.write("\n----------------------\n")
-                sys.stderr.write(proc.stderr)
-                sys.stderr.write("\n----------------------\n")
-                sys.stderr.write("\n")
+                if not proc.returncode == 0 and stderr is not None:
+                    sys.stderr.write("Error")
+                    sys.stderr.write("\n----------------------\n")
+                    sys.stderr.write(proc.stderr)
+                    sys.stderr.write("\n----------------------\n")
+                    sys.stderr.write("\n")
         except Exception, ex:
             sys.stderr.write("Error performing git operations\n\t=>%s\n" % ex.message)

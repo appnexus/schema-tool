@@ -5,5 +5,7 @@
     "schema_name": "tendril",
     "revision_schema_name": "tendril",
     "history_table_name": "history",
-    "type": "postgres"
+    "type": "postgres",
+    "pre_commit_hook": "relative/path/to-pre-commit-hook.sh",
+    "static_alter_dir": "relative/path/to-static-alters/"
 }
