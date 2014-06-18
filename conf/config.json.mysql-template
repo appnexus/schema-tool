@@ -5,5 +5,7 @@
     "revision_db_name": "revision",
     "history_table_name": "history",
     "port": 3306,
-    "type": "mysql"
+    "type": "mysql",
+    "pre_commit_hook": "relative/path/to-pre-commit-hook.sh",
+    "static_alter_dir": "relative/path/to-static-alters/"
 }
