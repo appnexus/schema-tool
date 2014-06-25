@@ -182,9 +182,17 @@ class MySQLDb(Db):
                            [ref])
 
     @classmethod
+    def get_append_commit_query(cls, ref):
+        return "INSERT INTO %s (alter_hash, ran_on) VALUES ('%s', NOW())" % (cls.full_table_name, ref)
+
+    @classmethod
     def remove_commit(cls, ref):
         return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.full_table_name, '%s'),
                            [ref])
+
+    @classmethod
+    def get_remove_commit_query(cls, ref):
+        return "DELETE FROM %s WHERE alter_hash = '%s'" % (cls.full_table_name, ref)
 
     @classmethod
     def create_history(cls):
@@ -317,9 +325,17 @@ class PostgresDb(Db):
                            (ref,))
 
     @classmethod
+    def get_append_commit_query(cls, ref):
+        return "INSERT INTO %s (alter_hash, ran_on) VALUES ('%s', NOW())" % (cls.full_table_name, ref)
+
+    @classmethod
     def remove_commit(cls, ref):
         return cls.execute('DELETE FROM %s WHERE alter_hash = %s' % (cls.full_table_name, '%s'),
                            (ref,))
+
+    @classmethod
+    def get_remove_commit_query(cls, ref):
+        return "DELETE FROM %s WHERE alter_hash = '%s'" % (cls.full_table_name, ref)
 
     @classmethod
     def create_history(cls):
