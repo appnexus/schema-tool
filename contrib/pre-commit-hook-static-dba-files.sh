@@ -39,7 +39,7 @@ cd "$(dirname $(readlink $0))"
 
 STAGED_FILES=$(cd $ORIG_DIR && git diff --cached --name-only --relative --diff-filter=ACMR)
 
-STATIC_ALTER_DIR=$(python -c "import json; print json.loads(open('config.json').read())['static_alter_dir']")
+STATIC_ALTER_DIR=$(/usr/bin/env python2.7 -c "import json; print json.loads(open('config.json').read())['static_alter_dir']")
 if [[ $? -ne 0 ]]
 then
   echoerr 'No static_alter_dir property found in config.json, but is required.'
