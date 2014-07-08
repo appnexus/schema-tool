@@ -161,7 +161,7 @@ class GenSqlCommand(Command):
 
             if options.include_rev_query:
                 def replace_fn(matchobj):
-                    result = ('-- rev query:\n%s\n-- end rev query\n' % rev_query.encode('utf-8'))
+                    result = ('-- rev query:\n%s;\n-- end rev query\n' % rev_query.encode('utf-8'))
                     return matchobj.group(0) + result
                 sql = re.sub("-- ref: %s\n" % node.id, replace_fn, sql)
             else:
