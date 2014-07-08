@@ -67,6 +67,7 @@ class GenSqlCommand(Command):
         if len(refs) == 0:
             # entire chain
             refs = self._get_node_ids(nodes)
+            refs.reverse()
 
         # validate valid refs
         for ref in refs:
@@ -144,8 +145,6 @@ class GenSqlCommand(Command):
                 else:
                     sql_file = open(os.path.join(Constants.ALTER_DIR, node.filename))
                 sql = sql_file.read()
-                if add_newlines:
-                    sql += "\n\n"
 
             except OSError, ex:
                 sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, node.filename), ex))
@@ -165,5 +164,8 @@ class GenSqlCommand(Command):
                     return matchobj.group(0) + result
                 sql = re.sub("-- ref: %s\n" % node.id, replace_fn, sql)
             else:
-                sql += rev_query
+                sql += (rev_query + ';')
+
+        if add_newlines:
+            sql += "\n\n"
         return sql
