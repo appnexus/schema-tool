@@ -11,6 +11,8 @@
 #   config.json to have the following value:
 #
 #   "pre_commit_hook": "pre-commit-hook-static-dba-files.sh"
+#
+# Last modified: 8 July 2014
 
 
 # Utility function to write to stderr
@@ -46,11 +48,28 @@ fi
 
 # Remove the .sql files in the static alter directory from the diff output
 STAGED_FILES_SQL_ONLY=$(echo "$STAGED_FILES" | grep -v "$STATIC_ALTER_DIR" | grep -E '\.sql')
+SEEN=()
 
 for f in $STAGED_FILES_SQL_ONLY
 do
   NODE=$(grep -oE '^[0-9]+' <(echo $(basename $f)))
   exit_if_err
+
+  SKIP=0
+  for var in "${SEEN[@]}"
+  do
+    if [[ "${var}" == "$NODE" ]]
+    then
+      SKIP=1
+    fi
+  done
+
+  if [[ $SKIP -eq 1 ]]
+  then
+    continue
+  fi
+
+  SEEN+=($NODE)
 
   UP_RESULT=$(schema gen-sql -q -w $NODE)
   exit_if_err
@@ -65,6 +84,6 @@ do
   ADD_DOWN=$(cd $ORIG_DIR && git add "*/$DOWN_RESULT")
   exit_if_err
 
-  echo "Added file to commit: $UP_RESULT"
-  echo "Added file to commit: $DOWN_RESULT"
+  echo "Added file to commit (up):   $UP_RESULT"
+  echo "Added file to commit (down): $DOWN_RESULT"
 done
