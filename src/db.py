@@ -121,7 +121,7 @@ class MySQLDb(Db):
             cls.db_name = '`%s`' % cls.config['revision_db_name']
         else:
             sys.stderr.write('No history schema found in config file. Please add values for the '
-                             'following keys: revision_schema_name, history_table_name\n')
+                             'following keys: revision_db_name, history_table_name\n')
             sys.exit(1)
 
 

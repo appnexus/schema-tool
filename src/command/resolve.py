@@ -292,10 +292,7 @@ class ResolveCommand(Command):
             else:
                 assert direction == 'down'
                 rev_query = self.db.get_remove_commit_query(new_ref)
-            def replace_fn(matchobj):
-                result = ('-- rev query:\n%s;\n-- end rev query\n' % rev_query.encode('utf-8'))
-                return matchobj.group(0) + result
-            content = re.sub("-- ref: %s\n" % new_ref, replace_fn, content)
+            content += '\n\n-- start rev query\n%s;\n-- end rev query\n' % rev_query.encode('utf-8')
             f = open(new_static_filename, 'w')
             f.write(content)
             f.close()

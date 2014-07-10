@@ -159,10 +159,7 @@ class GenSqlCommand(Command):
                 rev_query = self.db.get_append_commit_query(node.id)
 
             if options.include_rev_query:
-                def replace_fn(matchobj):
-                    result = ('-- rev query:\n%s;\n-- end rev query\n' % rev_query.encode('utf-8'))
-                    return matchobj.group(0) + result
-                sql = re.sub("-- ref: %s\n" % node.id, replace_fn, sql)
+                sql += '\n\n-- start rev query\n%s;\n-- end rev query\n' % rev_query.encode('utf-8')
             else:
                 sql += (rev_query + ';')
 
