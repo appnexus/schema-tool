@@ -12,7 +12,7 @@
 #
 #   "pre_commit_hook": "pre-commit-hook-static-dba-files.sh"
 #
-# Last modified: 8 July 2014
+# Last modified: 15 July 2014
 
 
 # Utility function to write to stderr
@@ -53,7 +53,11 @@ SEEN=()
 for f in $STAGED_FILES_SQL_ONLY
 do
   NODE=$(grep -oE '^[0-9]+' <(echo $(basename $f)))
-  exit_if_err
+  if [[ $? -ne 0 ]]
+  then
+    echo "Skipping invalid filename: $(basename $f)" 1>&2
+    continue
+  fi
 
   SKIP=0
   for var in "${SEEN[@]}"
