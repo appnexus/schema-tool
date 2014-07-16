@@ -252,7 +252,8 @@ schema init
 ```
 + Perform initial generation (for any existing alter):
 ```shell
-schema gen-sql -qw
+schema gen-sql -qw  # Generates static 'up' alters from existing 'up' alters
+schema gen-sql -qwd # Generates static 'down' alters from existing 'down' alters
 ```
 
 Now that you have the hook installed, you will see auto-generated files show up
