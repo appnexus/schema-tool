@@ -220,20 +220,21 @@ alter, then you may end up with an order-of events that does not make sense.
 
 ## DBA Alter Generation
 
-If you work in a large organization or with a mission-critical RDBMS, then your DBAs may,
-understandably, be hesitant to use any tool to automagically run alters against the
-production environment. However, you likely still want to take advantage of the
+If you work in a large organization or with a mission-critical RDBMS then your DBAs may,
+understandably, be hesitant to use any tool to auto-magically run alters against the
+production environment. However you likely still want to take advantage of the
 revision-tracking functionality that tools of this sort typically provide. This tool
 provides the best of both worlds. Your DBAs can use plain alters (and whatever tools
 they choose) and you can track what revisions have run against your production DB. This
 can be done with the `gen-sql` command.
 
 The `gen-sql` command generates a set of alters, from your original alters, with SQL
-added to manage the revision table on _up_ or _down_. To get started we need to ensure
-that our schema project is setup correctly for static alter genration.
+added to manage the revision table on _up_ or _down_ alters. To get started we need to
+ensure that our schema project is setup correctly for static alter genration.
 
 > __Assumptions:__
-> + All commands are performed within the root directory of the schema project
+> + All commands are performed within the root directory of the schema project that
+    _you_ created
 > + The `config.json` (config file) is located within the project root
 
 0. Edit your config.json to include the following two keys:
