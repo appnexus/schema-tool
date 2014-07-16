@@ -234,23 +234,23 @@ ensure that our schema project is setup correctly for static alter genration.
 
 > __Assumptions:__
 > + All commands are performed within the root directory of the schema project that
-    _you_ created
+    _you_ created (as per the __Getting Started__ section)
 > + The `config.json` (config file) is located within the project root
 
-0. Edit your config.json to include the following two keys:
++ Edit your config.json to include the following two keys:
 ```json
 "static_alter_dir": "DBA_FILES/"
 "pre_commit_hook": "pre-commit-hook-static-dba-files.sh"
 ```
-0. Copy the pre-commit hook from the schema-tool's contrib to your schema-dir:
++ Copy the pre-commit hook from the schema-tool's contrib to your schema-dir:
 ```shell
 cp SCHEMA-TOOL-REPO/contrib/pre-commit-hook-static-dba-files.sh .
 ```
-0. Use the schema-tool to install the hook and perform any needed setup:
++ Use the schema-tool to install the hook and perform any needed setup:
 ```shell
 schema init
 ```
-0. Perform initial generation (for any existing alter):
++ Perform initial generation (for any existing alter):
 ```shell
 schema gen-sql -qw
 ```
