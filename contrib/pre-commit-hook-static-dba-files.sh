@@ -12,7 +12,7 @@
 #
 #   "pre_commit_hook": "pre-commit-hook-static-dba-files.sh"
 #
-# Last modified: 15 July 2014
+# Last modified: 16 July 2014
 
 
 # Utility function to write to stderr
@@ -35,7 +35,8 @@ exit_if_err() {
 # be performed.
 
 ORIG_DIR=$(pwd)
-cd "$(dirname $(readlink $0))"
+HOOK_DIR=$(dirname $(readlink $0))
+cd $HOOK_DIR
 
 STAGED_FILES=$(cd $ORIG_DIR && git diff --cached --name-only --relative --diff-filter=ACMR)
 
@@ -82,10 +83,10 @@ do
   exit_if_err
 
   # Add the up and down files to git
-  ADD_UP=$(cd $ORIG_DIR && git add "*/$UP_RESULT")
+  ADD_UP=$(cd $ORIG_DIR && git add "$HOOK_DIR/$UP_RESULT")
   exit_if_err
 
-  ADD_DOWN=$(cd $ORIG_DIR && git add "*/$DOWN_RESULT")
+  ADD_DOWN=$(cd $ORIG_DIR && git add "$HOOK_DIR/$DOWN_RESULT")
   exit_if_err
 
   echo "Added file to commit (up):   $UP_RESULT"
