@@ -1,4 +1,5 @@
 # stdlib imports
+from itertools import islice
 from optparse import OptionParser
 import os
 import re
