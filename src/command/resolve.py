@@ -111,9 +111,9 @@ class ResolveCommand(Command):
             if not MetaDataUtil.parse_direction(head) == 'up':
                 sys.stderr.write("File can only be an up-alter: '%s'" % self.file)
 
-            refs = MetaDataUtil.parse_meta(head)
-            if 'ref' in refs:
-                self.ref = refs['ref']
+            meta_data = MetaDataUtil.parse_meta(head)
+            if 'ref' in meta_data:
+                self.ref = meta_data['ref']
 
         return file_found
 

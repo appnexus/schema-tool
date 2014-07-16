@@ -12,6 +12,7 @@ class SimpleNode:
     def __init__(self, id, filename):
         self.id = id
         self.backref = None
+        self.meta = {}
         self.filename = filename
 
         self.re_num       = re.compile('^\d{12}-')
