@@ -50,7 +50,7 @@ class MetaDataUtil(object):
             return None
 
     @classmethod
-    def parse_meta2(cls, file_contents):
+    def parse_meta(cls, file_contents):
         """
         Given the file contents (all of it) parse the meta-data and what have
         you. Really just the first few lines until a non-empty, non-space, non-
