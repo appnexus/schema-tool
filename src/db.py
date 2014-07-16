@@ -236,8 +236,9 @@ class MySQLDb(Db):
     def run_file_cmd(cls):
         cmd = ['mysql',
                '-h', cls.config['host'],
-               '-u', cls.config['username'],
-               '-p%s' % cls.config['password']]
+               '-u', cls.config['username']]
+        if not cls.config['password'] == None and not cls.config['password'] == '':
+            cmd.append('-p%s' % cls.config['password'])
         my_env = None
         return cmd, my_env
 
