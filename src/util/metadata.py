@@ -58,8 +58,8 @@ class MetaDataUtil(object):
         as well as any other meta-data (env, author, etc.)
 
         Return a dict of key-value pairs where the key is the meta-data key and the
-        value is the meata-data value. Ex:
-        { "ref": 1234, "backref": 123, "env": "prod"
+        value is the meta-data value. Ex:
+        { "ref": 1234, "backref": 123, "env": "prod" }
         """
         meta = {}
         valid_line = re.compile('^\s*--|^\s*$')
@@ -86,10 +86,10 @@ class MetaDataUtil(object):
         Returns a 2-tuple of the key-value pair. Note that whitespace is trimmed
         off of the beginning and end of keys and values
         """
-        comment_regex = re.compile('--\s*')
+        comment_regex = re.compile('\s*--\s*')
         line = comment_regex.sub('', line)
 
-        key_value_regex = re.compile('^(\s*[a-zA-Z0-9\-_]+\s*):(.*)$')
+        key_value_regex = re.compile('^([a-zA-Z0-9\-_]+\s*):(.*)$')
         match = key_value_regex.match(line)
 
         if match:
