@@ -210,10 +210,15 @@ class MySQLDb(Db):
         """
         config = cls.config
         try:
-            conn = mysql.connector.Connect(user=config['username'],
-                                           password=config['password'],
-                                           host=config['host'],
-                                           port=config['port'])
+            if cls.config.get('password'):
+                conn = mysql.connector.Connect(user=config['username'],
+                                               password=config['password'],
+                                               host=config['host'],
+                                               port=config['port'])
+            else:
+                conn = mysql.connector.Connect(user=config['username'],
+                                               host=config['host'],
+                                               port=config['port'])
         except mysql.connector.InterfaceError, ex:
             sys.stderr.write('Unable to connect to mysql: %s\n' % ex)
             sys.stderr.write('Ensure that the server is running and you can connect normally\n')
@@ -236,8 +241,9 @@ class MySQLDb(Db):
     def run_file_cmd(cls):
         cmd = ['mysql',
                '-h', cls.config['host'],
-               '-u', cls.config['username'],
-               '-p%s' % cls.config['password']]
+               '-u', cls.config['username']]
+        if cls.config.get('password'):
+            cmd.append('-p%s' % cls.config['password'])
         my_env = None
         return cmd, my_env
 
