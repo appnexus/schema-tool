@@ -15,7 +15,7 @@ class UpCommand(Command):
         usage = "schema up [options] [ref]" \
                 "\n\n" \
                 "Arguments" \
-                "\n  ref               Rn all alters up to, and including the ref given"
+                "\n  ref               Run all alters up to, and including, the ref given"
         parser = OptionParser(usage=usage)
         parser.add_option('-n', '--number',
                           action='store', dest='N',
