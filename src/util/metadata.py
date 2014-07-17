@@ -48,51 +48,55 @@ class MetaDataUtil(object):
             return down.groups()[0]
         else:
             return None
-    
-    
-    @classmethod
-    def parse_meta(cls, head):
-        """
-        Given the top two lines of the file, parse the meta-data and what have
-        you. Really just the refs (this-ref and back-ref)
-    
-        Return a dict of this-ref and back-ref as:
-        {"ref": int, "backref": int}
-    
-        Note: may not have a backref if first element, but should always have a ref
-        """
-        head = [h.rstrip() for h in head]
-        refs = {}
-        for line in head:
-            (ref, ref_type) = cls.__parse_ref(line)
-            if not ref_type == 'none':
-                refs[ref_type] = ref
-        return refs
-    
-    
-    @classmethod
-    def __parse_ref(cls, line):
-        """
-        Parse out the ref, or backref, of the meta-data that is stored at the top
-        of each SQL file.
-        """
-        if not line[0:2] == '--':
-            return None, 'none'
-        regex = re.compile('--\s*')
-        line = regex.sub('', line)
-    
-        ref_match     = re.compile('ref\s*:\s*(\d+)')
-        backref_match = re.compile('backref\s*:\s*(\d+)')
-    
-        rm  = ref_match.match(line)
-        brm = backref_match.match(line)
-    
-        if rm is not None:
-            rid = rm.groups()[0]
-            return rid, 'ref'
-        elif brm is not None:
-            br_id = brm.groups()[0]
-            return br_id, 'backref'
-        else:
-            return None, 'none'
 
+    @classmethod
+    def parse_meta(cls, file_contents):
+        """
+        Given the file contents (all of it) parse the meta-data and what have
+        you. Really just the first few lines until a non-empty, non-space, non-
+        comment line is reached. This will return the refs (this-ref and back-ref)
+        as well as any other meta-data (env, author, etc.)
+
+        Return a dict of key-value pairs where the key is the meta-data key and the
+        value is the meta-data value. Ex:
+        { "ref": 1234, "backref": 123, "env": "prod" }
+        """
+        meta = {}
+        valid_line = re.compile('^\s*--|^\s*$')
+        for line in file_contents:
+            if valid_line.match(line) == None:
+                break
+            key, value = cls.__parse_key(line)
+            if key and value:
+                meta[key] = value
+
+        return meta
+
+    @classmethod
+    def __parse_key(cls, line):
+        """
+        Given a line, parse a key-value pair out of it. Key value pairs are seen
+        as SQL comments followed by some string and a ':' that separate the key
+        and value.  Some examples are:
+
+          -- one: two
+          -- _three3: four
+          -- 5-9: 10-20
+
+        Returns a 2-tuple of the key-value pair. Note that whitespace is trimmed
+        off of the beginning and end of keys and values
+        """
+        comment_regex = re.compile('\s*--\s*')
+        line = comment_regex.sub('', line)
+
+        key_value_regex = re.compile('^([a-zA-Z0-9\-_]+\s*):(.*)$')
+        match = key_value_regex.match(line)
+
+        if match:
+            key   = match.groups()[0].strip()
+            value = match.groups()[1].strip()
+        else:
+            key   = None
+            value = None
+
+        return (key, value)

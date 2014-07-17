@@ -59,14 +59,16 @@ class ChainUtil(object):
             if not MetaDataUtil.parse_direction(head) == 'up':
                 continue
     
-            refs = MetaDataUtil.parse_meta(head)
+            meta_data = MetaDataUtil.parse_meta(head)
     
-            if not 'ref' in refs:
+            if not 'ref' in meta_data:
                 continue
     
-            node = SimpleNode(filename=f, id=refs['ref'])
-            if 'backref' in refs:
-                node.backref = refs['backref']
+            node = SimpleNode(filename=f, id=meta_data['ref'])
+            if 'backref' in meta_data:
+                node.backref = meta_data['backref']
+
+            node.meta = meta_data
     
             nodes.append(node)
     
