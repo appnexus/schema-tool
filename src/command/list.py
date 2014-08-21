@@ -48,9 +48,9 @@ class ListCommand(Command):
                 normal_str.append(temp_node.__str__(False))
                 temp_node = temp_node.backref
             if list_reverse:
-                normal_str.reverse()
                 print("\n".join(normal_str))
             elif list_normal:
+                normal_str.reverse()
                 print("\n".join(normal_str))
 
     def __set_is_applied_flag(self, chain):
