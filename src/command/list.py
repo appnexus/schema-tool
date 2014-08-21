@@ -42,12 +42,16 @@ class ListCommand(Command):
         if list_tail is None:
             sys.stdout.write("No alters found\n")
         else:
+            normal_str = []
+            temp_node = list_tail
+            while temp_node is not None:
+                normal_str.append(temp_node.__str__(False))
+                temp_node = temp_node.backref
             if list_reverse:
-                normal_str = str(list_tail).splitlines()
                 normal_str.reverse()
                 print("\n".join(normal_str))
             elif list_normal:
-                print("%s" % list_tail)
+                print("\n".join(normal_str))
 
     def __set_is_applied_flag(self, chain):
         """
