@@ -2,7 +2,7 @@
 import sys
 
 # local imports
-from db import MySQLDb, PostgresDb
+from db import MySQLDb, PostgresDb, MemoryDb
 
 class CommandContext:
     """
@@ -26,6 +26,8 @@ class CommandContext:
                 db = PostgresDb.new(config)
             elif config['type'] == 'mysql':
                 db = MySQLDb.new(config)
+            elif config['type'] == 'memory-db':
+                db = MemoryDb.new(config)
             else:
                 sys.stderr.write("Invalid database type in config. Only \
                                   'postgres' and 'mysql' are allowed.")
