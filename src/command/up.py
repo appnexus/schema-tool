@@ -113,5 +113,8 @@ class UpCommand(Command):
                 self.db.run_up(alter=alter,
                           force=options.force,
                           verbose=options.verbose)
+            else:
+                sys.stderr.write("Warning: alter " + str(alter.id) + " has already been " \
+                        "run. Skipping")
 
         sys.stdout.write("Updated\n")
