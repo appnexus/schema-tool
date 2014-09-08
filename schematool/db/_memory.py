@@ -10,6 +10,7 @@ class MemoryDb(Db):
         super(MemoryDb, cls).new(config)
 
         cls.data = []
+        cls.id   = 0
 
         return cls
 
@@ -36,7 +37,8 @@ class MemoryDb(Db):
 
     @classmethod
     def append_commit(cls, ref):
-        cls.data.append({'ref': ref})
+        cls.id += 1
+        cls.data.append([cls.id, ref, None])
 
     @classmethod
     def get_append_commit_query(cls, ref):
@@ -44,7 +46,7 @@ class MemoryDb(Db):
 
     @classmethod
     def remove_commit(cls, ref):
-        to_remove = [d for d in cls.data if d['ref'] == ref]
+        to_remove = [d for d in cls.data if d[1] == ref]
         if len(to_remove) > 0:
             cls.data.remove(to_remove[0])
         return True
