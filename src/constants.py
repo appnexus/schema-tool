@@ -18,4 +18,4 @@ class Constants(object):
     ]
     FILENAME_STANDARD = re.compile('^\d{12}-.+-(up|down)\.sql$')
     ISSUE_URL = "http://github.com/appnexus/schema-tool/issues"
-    VERSION = "0.2.14"
+    VERSION = "0.2.16"
