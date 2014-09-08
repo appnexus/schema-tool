@@ -26,6 +26,10 @@ class UpCommand(Command):
         parser.add_option('-v', '--verbose',
                           action='store_true', dest='verbose', default=False,
                           help='Output verbose error-messages when used with -f option if errors are encountered')
+        parser.add_option('-u', '--no-undo',
+                          action='store_false', dest='undo', default=True,
+                          help='When comparing histories (of what has ran and what is to be ran) do not undo ' \
+                              'any previously ran alters')
         self.parser = parser
 
     def run(self):
@@ -49,6 +53,7 @@ class UpCommand(Command):
         # get history
         history = self.db.get_commit_history()
         history = sorted(history, key=lambda h: h[0])
+        history_alters = [h[1] for h in history]
 
         # get current alter-chain
         tail = ChainUtil.build_chain()
@@ -71,19 +76,22 @@ class UpCommand(Command):
                 alter_list.append(alter)
                 break
 
-        # undo alters that are not in sync with alter chain
-        uncommon_history = history[common_history:]
-        if len(uncommon_history) > 0:
-            # clean up alters from here
-            uncommon_history.reverse()
-            for (_id, alter_id, datetime) in uncommon_history:
-                alters = [a for a in alter_list if a.id == alter_id]
-                if len(alters) > 0:
-                    sys.stderr.write("Multiple alters found for a single id\n")
-                    if not options.force:
-                        sys.exit(1)
-                alter = alters[0]
-                self.db.run_down(alter)
+        # undo alters that are not in sync with alter chain if options.undo is true.
+        if options.undo:
+            uncommon_history = history[common_history:]
+            if len(uncommon_history) > 0:
+                # clean up alters from here
+                uncommon_history.reverse()
+                for (_id, alter_id, datetime) in uncommon_history:
+                    alters = [a for a in alter_list if a.id == alter_id]
+                    if len(alters) > 1:
+                        sys.stderr.write("Multiple alters found for a single id (" 
+                                + a.id + ")\n")
+                        if not options.force:
+                            sys.exit(1)
+                    alter = alters[0]
+                    self.db.run_down(alter)
+
 
         # do alters that are in the alter-chain and have not
         # ben run yet
@@ -101,8 +109,9 @@ class UpCommand(Command):
                     i = (max - 1)
 
             i += 1
-            self.db.run_up(alter=alter,
-                      force=options.force,
-                      verbose=options.verbose)
+            if alter.id not in history_alters:
+                self.db.run_up(alter=alter,
+                          force=options.force,
+                          verbose=options.verbose)
 
         sys.stdout.write("Updated\n")
