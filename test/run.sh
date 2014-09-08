@@ -5,7 +5,7 @@ STDERR_FILE='/tmp/schema-tool-test-stderr'
 
 # output functions
 error() { echo -e "[\033[1;31merror\033[0m]: $1"; }
-success() { echo -e "[\033[1;32merror\033[0m]: $1"; }
+success() { echo -e "[\033[1;32msuccess\033[0m]: $1"; }
 
 
 
