@@ -4,8 +4,8 @@ import sys
 import unittest
 from time import sleep
 
-# src imports
-import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../src')
+# schematool imports
+import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../schematool')
 sys.path.append(import_path)
 from command import NewCommand, CommandContext
 from util import ChainUtil
@@ -70,7 +70,7 @@ class NewTest(unittest.TestCase):
     def test_no_backref_on_single_alter(self):
         sys.argv = ['file', '-f', '1']
         self.commandObj.run()
- 
+
         chain_tail = ChainUtil.build_chain()
         self.assertTrue(chain_tail.backref is None)
 
