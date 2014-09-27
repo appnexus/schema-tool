@@ -26,12 +26,14 @@ from traceback import print_exc
 from command import *
 
 
-def main(config):
+def main():
     """
     Determine what command is being called and dispatch it to the appropriate
-    handler. If the command is unknown or the '-h' or '-v' flag has been given, 
+    handler. If the command is unknown or the '-h' or '-v' flag has been given,
     display help-file or version-info, respectively.
     """
+    config = load_config()
+
     commands = [
         "  new         Create a new alter",
         "  check       Check that all back-refs constitute a valid chain",
@@ -109,8 +111,6 @@ def load_config():
     return config
 
 
-
 # Start the script
 if __name__ == "__main__":
-    config = load_config()
-    main(config)
+    main()

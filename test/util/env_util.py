@@ -4,8 +4,8 @@ import shutil
 import sys
 import tempfile
 
-# src imports
-import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../src')
+# schematool imports
+import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../schematool')
 sys.path.append(import_path)
 from command import NewCommand, CommandContext
 from constants import Constants
@@ -22,7 +22,7 @@ class EnvironmentUtil:
         cls.current_dir = cls.env_folder
 
         Constants.ALTER_DIR = cls.current_dir
-    
+
     @classmethod
     def teardown_fresh_test_env(cls):
         os.chdir(cls.previous_dir)
@@ -30,4 +30,3 @@ class EnvironmentUtil:
         shutil.rmtree(cls.env_folder)
 
         Constants.ALTER_DIR = cls.current_dir
-
