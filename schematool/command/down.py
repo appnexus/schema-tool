@@ -9,6 +9,7 @@ from command import Command
 from check import CheckCommand
 from constants import Constants
 from util import ChainUtil
+from util import System
 
 class DownCommand(Command):
     def init_parser(self):
@@ -57,6 +58,9 @@ class DownCommand(Command):
             tail = tail.backref
             alter_list.append(tail)
 
+        # parse the args given
+        run_type, target_rev = self.parse_args(args)
+
         # collect the down-alters that we need to run depending on the command line
         # options and arguments that were given
         down_alters_to_run = []
@@ -65,16 +69,14 @@ class DownCommand(Command):
         for (id, alter_id, datetime) in history:
             if i == max:
                 break
-            if len(args) > 0:
-                if args[0] == 'base':
-                    if i == (max - 1):
-                        break
-                elif args[0] == 'all':
-                    pass
-                else:
-                    target_rev = args[0]
-                    if target_rev == alter_id:
-                        i = (max - 1)
+            if run_type == 'base':
+                if i == (max - 1):
+                    break
+            elif run_type == 'all':
+                pass
+            else:
+                if target_rev == alter_id:
+                    i = (max - 1)
 
             i += 1
             alters = [a for a in alter_list if a.id == alter_id]
@@ -87,8 +89,17 @@ class DownCommand(Command):
                     sys.stderr.write("Warning: missing alter: %s\n" % alter_id)
                     self.db.remove_commit(ref=alter_id)
                 else:
-                    sys.stderr.write("error, missing alter: %s\n" % alter_id)
+                    sys.stderr.write("Error: missing alter: %s\n" % alter_id)
                     sys.exit(1)
+
+        # ensure that if a target_revision was specified that one was found in
+        # in the list of alters to run (down)
+        if run_type == 'revision' and \
+           target_rev not in [a.id for a in down_alters_to_run]:
+            sys.stderr.write(
+                    'Error: revision (%s) not found in alters' % target_rev)
+            # sys.exit(1)
+            System.exit(1)
 
         # run all the down-alters that we have collected
         for alter_to_run in down_alters_to_run:
@@ -97,3 +108,17 @@ class DownCommand(Command):
                         verbose=options.verbose)
 
         sys.stdout.write("Downgraded\n")
+    
+    def parse_args(self, args):
+        run_type = None
+        target_rev = None
+        if (len(args) > 0):
+            if args[0].lower() == 'all':
+                run_type = 'all'
+            elif args[0].lower() == 'base':
+                run_type = 'base'
+            else:
+                run_type = 'revision'
+                target_rev = args[0]
+
+        return (run_type, target_rev)
