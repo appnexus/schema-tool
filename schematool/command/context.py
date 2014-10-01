@@ -2,7 +2,7 @@
 import sys
 
 # local imports
-from schematool.db import MySQLDb, PostgresDb, MemoryDb
+from db import MySQLDb, PostgresDb, MemoryDb
 
 class CommandContext:
     """
