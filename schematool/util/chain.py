@@ -51,7 +51,7 @@ class ChainUtil(object):
     
             try:
                 my_file = open(os.path.join(Constants.ALTER_DIR, f))
-                head = list(islice(my_file, 3))
+                head = list(islice(my_file, 4))
             except OSError, ex:
                 sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, f), ex.message))
                 sys.exit(1)
@@ -67,6 +67,12 @@ class ChainUtil(object):
             node = SimpleNode(filename=f, id=meta_data['ref'])
             if 'backref' in meta_data:
                 node.backref = meta_data['backref']
+            if 'require-env' in meta_data:
+                node.require_env = MetaDataUtil.parse_env(meta_data['require-env'])
+            if 'skip-env' in meta_data:
+                if 'require-env' in meta_data:
+                    raise Exception('Cannot use skip-env with require-env')
+                node.skip_env = MetaDataUtil.parse_env(meta_data['skip-env'])
 
             node.meta = meta_data
     

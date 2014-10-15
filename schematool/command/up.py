@@ -110,9 +110,20 @@ class UpCommand(Command):
 
             i += 1
             if alter.id not in history_alters:
-                self.db.run_up(alter=alter,
-                          force=options.force,
-                          verbose=options.verbose)
+                skip = False
+                config_env = self.config.get('env')
+                require_env = getattr(alter, 'require_env', False)
+                skip_env = getattr(alter, 'skip_env', False)
+                if require_env:
+                    if config_env not in require_env:
+                        skip = True
+                elif skip_env:
+                    if config_env in skip_env:
+                        skip = True
+                if not skip:
+                    self.db.run_up(alter=alter,
+                              force=options.force,
+                              verbose=options.verbose)
             else:
                 sys.stderr.write("Warning: alter " + str(alter.id) + " has already been " \
                         "run. Skipping")

@@ -64,19 +64,19 @@ class DownCommand(Command):
         # collect the down-alters that we need to run depending on the command line
         # options and arguments that were given
         down_alters_to_run = []
-        max = int(options.N or len(history))
+        max_ = int(options.N or len(history))
         i = 0
         for (id, alter_id, datetime) in history:
-            if i == max:
+            if i == max_:
                 break
             if run_type == 'base':
-                if i == (max - 1):
+                if i == (max_ - 1):
                     break
             elif run_type == 'all':
                 pass
             else:
                 if target_rev == alter_id:
-                    i = (max - 1)
+                    i = (max_ - 1)
 
             i += 1
             alters = [a for a in alter_list if a.id == alter_id]

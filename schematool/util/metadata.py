@@ -9,7 +9,7 @@ class MetaDataUtil(object):
         """
         Given the entire head meta-data (an array of strings) parse out
         the direction of the alter (up/down) and return that value.
-    
+
         Returns a string 'up' or 'down' or None if nothing can be parsed
         from the given input
         """
@@ -17,10 +17,20 @@ class MetaDataUtil(object):
         direction = None
         for line in head:
             direction = cls.__parse_line_for_direction(line) or direction
-    
+
         return direction
-    
-    
+
+    @classmethod
+    def parse_env(cls, envlist_str):
+        result = []
+        for i in envlist_str.split(','):
+            match = re.match(Constants.ENV_STANDARD, i.strip())
+            if match is not None:
+                result.append(match.group(0))
+            else:
+                raise Exception('Invalid branch name: \'%s\'' % i)
+        return result
+
     @classmethod
     def __parse_line_for_direction(cls, line):
         """
@@ -30,18 +40,18 @@ class MetaDataUtil(object):
         """
         if line is None:
             return None
-    
+
         if not line[0:2] == '--':
             return None
         regex = re.compile('--\s*')
         line = regex.sub('', line)
-    
+
         up_regex   = re.compile('direction\s*:\s*(up)')
         down_regex = re.compile('direction\s*:\s*(down)')
-    
+
         up   = up_regex.match(line)
         down = down_regex.match(line)
-    
+
         if up is not None:
             return up.groups()[0]
         elif down is not None:
