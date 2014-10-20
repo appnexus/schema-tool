@@ -24,11 +24,12 @@ class MetaDataUtil(object):
     def parse_env(cls, envlist_str):
         result = []
         for i in envlist_str.split(','):
-            match = re.match(Constants.ENV_STANDARD, i.strip())
+            i_stripped = i.strip()
+            match = re.match(Constants.ENV_NAME_STANDARD, i_stripped)
             if match is not None:
                 result.append(match.group(0))
             else:
-                raise Exception('Invalid branch name: \'%s\'' % i)
+                raise Exception('Invalid environment name: \'%s\'' % i_stripped)
         return result
 
     @classmethod
