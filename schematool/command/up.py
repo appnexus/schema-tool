@@ -69,7 +69,11 @@ class UpCommand(Command):
         for (_id, alter_id, datetime) in history:
             if len(alter_list) == 0:
                 break
+            # don't count alters for other env's in common-history
             alter = alter_list.pop()
+            while not self.should_run(alter):
+                alter = alter_list.pop()
+
             if alter.id == alter_id:
                 common_history += 1
             else:
@@ -91,6 +95,7 @@ class UpCommand(Command):
                             sys.exit(1)
                     alter = alters[0]
                     self.db.run_down(alter)
+                    if alter.id in history_alters: history_alters.remove(alter.id)
 
 
         # do alters that are in the alter-chain and have not
@@ -109,23 +114,34 @@ class UpCommand(Command):
                     i = (max - 1)
 
             i += 1
-            if alter.id not in history_alters:
-                skip = False
-                config_env = self.config.get('env')
-                require_env = getattr(alter, 'require_env', False)
-                skip_env = getattr(alter, 'skip_env', False)
-                if require_env:
-                    if config_env not in require_env:
-                        skip = True
-                elif skip_env:
-                    if config_env in skip_env:
-                        skip = True
-                if not skip:
-                    self.db.run_up(alter=alter,
-                              force=options.force,
-                              verbose=options.verbose)
+            if alter.id not in history_alters and self.should_run(alter):
+                self.db.run_up(alter=alter,
+                          force=options.force,
+                          verbose=options.verbose)
+            elif not self.should_run(alter):
+                # possible to get a skipped alter in the event that it wasn't removed
+                # in the common-history code (aka, running new alters)
+                pass
             else:
                 sys.stderr.write("Warning: alter " + str(alter.id) + " has already been " \
-                        "run. Skipping")
+                        "run. Skipping\n")
 
         sys.stdout.write("Updated\n")
+
+    def should_run(self, alter):
+        """
+        Given an alter, pull out the meta-data and see if we should be running this
+        alter based on the current environment.
+        """
+        run = True
+        config_env = self.config.get('env')
+        require_env = getattr(alter, 'require_env', False)
+        skip_env = getattr(alter, 'skip_env', False)
+        if require_env:
+            if config_env not in require_env and config_env is not None:
+                run = False
+        elif skip_env:
+            if config_env in skip_env and config_env is not None:
+                run = False
+
+        return run
