@@ -94,7 +94,8 @@ class UpCommand(Command):
                             sys.stderr.write(msg + "\n")
                     alter = alters[0]
                     self.db.run_down(alter)
-                    if alter.id in history_alters: history_alters.remove(alter.id)
+                    if alter.id in history_alters:
+                        history_alters.remove(alter.id)
 
         # Ensure that if a target ref was specified that one was found in
         # in the list of alters to run (up)
