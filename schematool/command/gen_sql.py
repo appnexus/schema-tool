@@ -1,12 +1,12 @@
 # stdlib imports
 from optparse import OptionParser
 import os
-import re
 import sys
 
 # local imports
 from command import Command
 from constants import Constants
+from errors import ReadError
 from util import ChainUtil
 
 class GenSqlCommand(Command):
@@ -75,7 +75,7 @@ class GenSqlCommand(Command):
             if node is False:
                 sys.stderr.write("Error: Ref '%s' could not be found" % ref)
                 self.parser.print_help()
-                sys.exit(1)
+                raise MissingRefError()
             else:
                 ref_nodes.append(node)
 
@@ -147,10 +147,9 @@ class GenSqlCommand(Command):
                 sql = sql_file.read()
 
             except OSError, ex:
-                sys.stderr.write("Error opening file '%s'.\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, node.filename), ex))
                 if 'sql_file' in locals():
                     sql_file.close()
-                sys.exit(1)
+                raise ReadError("could not file '%s'.\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, node.filename), ex))
 
         if options.include_rev_query or options.gen_revision:
             if options.down_alter:

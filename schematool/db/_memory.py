@@ -1,6 +1,5 @@
 # stdlib imports
 import copy
-import sys
 
 from db import Db
 
@@ -11,6 +10,7 @@ class MemoryDb(Db):
 
         cls.data = []
         cls.id   = 0
+        cls.auto_throw_error = True
 
         return cls
 
@@ -18,12 +18,11 @@ class MemoryDb(Db):
     def init_conn(cls):
         pass
 
-
     @classmethod
     def drop_revision(cls):
         cls.data = []
 
-    @classmethod 
+    @classmethod
     def create_revision(cls):
         pass
 
@@ -33,7 +32,7 @@ class MemoryDb(Db):
 
     @classmethod
     def get_applied_alters(cls):
-        return [d['ref'] for d in cls.data]
+        return [d[1] for d in cls.data]
 
     @classmethod
     def append_commit(cls, ref):
@@ -65,4 +64,8 @@ class MemoryDb(Db):
 
     @classmethod
     def run_file_cmd(cls):
-        return ['echo'], None
+        return ['/bin/true'], None
+
+    @classmethod
+    def run_file_cmd_with_error(cls):
+        return ['/bin/false'], None

@@ -22,8 +22,9 @@ else:
 from optparse import OptionParser
 from traceback import print_exc
 
-# loal imports
+# local imports
 from command import *
+from errors import *
 
 
 def main():
@@ -82,6 +83,10 @@ def main():
                     Constants.ISSUE_URL))
             sys.stderr.write("Error: %s, %s\n\n" % (er.errno, er.strerror))
             sys.exit(1)
+        except tuple([i[1] for i in inspect.getmembers(errors) if inspect.isclass(i[1])]), e:
+            sys.stderr.write("Error: %s\n\n" % e.message)
+            sys.exit(1)
+
         except Exception, ex:
             sys.stderr.write(
                 "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
@@ -102,12 +107,11 @@ def load_config():
         try:
             config = json.load(config_file)
         except ValueError, ex:
-            sys.stderr.write("Could not parse config file: %s\n" % ex.message)
-            sys.exit(1)
+            raise ConfigFileError("could not parse config file: %s\n" % ex.message)
     except IOError, ex:
         sys.stderr.write("Error reading config: %s\n" % ex.strerror)
         sys.stderr.write("Tried reading: %s\n" % Constants.CONFIG_FILE)
-        sys.exit(1)
+        raise ConfigFileError("could not read config file")
     return config
 
 

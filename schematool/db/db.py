@@ -1,8 +1,10 @@
 # stdlib imports
-import os
 import subprocess
 import sys
-import re
+
+# local imports
+from errors import AppliedAlterError
+from util import System
 
 # TODO: Move connection management to schema.py. Instantiate a connection
 # before each run() method and close it at the end, using the DB.conn() method.
@@ -61,7 +63,10 @@ class Db(object):
 
     @classmethod
     def _run_file(cls, filename, exit_on_error=True, verbose=False):
-        command, my_env = cls.run_file_cmd()
+        if getattr(cls, 'auto_throw_error', False) and 'error' in filename:
+            command, my_env = cls.run_file_cmd_with_error()
+        else:
+            command, my_env = cls.run_file_cmd()
         proc = subprocess.Popen(command,
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
@@ -84,7 +89,7 @@ class Db(object):
                 sys.stderr.write("\n----------------------\n")
             sys.stderr.write("\n")
             if exit_on_error:
-                sys.exit(1)
+                raise AppliedAlterError('%s execution unsuccessful' % filename)
 
     @classmethod
     def get_applied_alters(cls):

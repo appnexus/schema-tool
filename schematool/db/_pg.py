@@ -9,8 +9,9 @@ try:
 except ImportError:
     pass
 
-# Local imports
+# local imports
 from db import Db
+from errors import DbError
 
 class PostgresDb(Db):
     @classmethod
@@ -20,9 +21,8 @@ class PostgresDb(Db):
             cls.full_table_name = '"%s"."%s"' % (cls.config['revision_schema_name'],
                                                  cls.config['history_table_name'])
         else:
-            sys.stderr.write('No schema found in config file. Please add one with the key: '
-                             'revision_schema_name')
-            sys.exit(1)
+            raise DbError('No schema found in config file. Please add one with the key: '
+                          'revision_schema_name')
 
         return cls
 
@@ -31,8 +31,7 @@ class PostgresDb(Db):
         try:
           psycopg2
         except NameError:
-          sys.stderr.write('Postgres module not found/loaded. Please make sure all dependencies are installed\n')
-          sys.exit(1)
+          raise DbError('Postgres module not found/loaded. Please make sure all dependencies are installed\n')
 
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
@@ -74,9 +73,8 @@ class PostgresDb(Db):
             cls.conn.commit()
             return results
         except Exception, e:
-            sys.stderr.write('Psycopg2 execution error: %s\n. Query: %s - Data: %s\n.'
-                             % (e.message, query, str(data)))
-            sys.exit(1)
+            raise DbError('Psycopg2 execution error: %s\n. Query: %s - Data: %s\n.'
+                          % (e.message, query, str(data)))
 
     @classmethod
     def drop_revision(cls):
@@ -147,7 +145,7 @@ class PostgresDb(Db):
         except Exception, e:
             sys.stderr.write('Unable to connect to psql: %s\n' % e.message)
             sys.stderr.write('Ensure that the server is running and you can connect normally\n')
-            sys.exit(1)
+            raise DbError("Cannot connect to Postgres Db (3)")
 
         return conn
 

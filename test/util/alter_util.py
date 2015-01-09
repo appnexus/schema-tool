@@ -1,21 +1,18 @@
 # stdlib imports
 import os
-import shutil
 import sys
 from time import sleep
-import tempfile
 
 # src imports
 import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../src')
 sys.path.append(import_path)
 from command import NewCommand, CommandContext, UpCommand
-from constants import Constants
 from util import ChainUtil
 
 
 class AlterUtil(object):
     initialized = False
-    
+
     @classmethod
     def init(cls):
         if not cls.initialized:
@@ -29,14 +26,17 @@ class AlterUtil(object):
     def create_alter(cls, name):
         cls.init()
         sys.argv = ['', '-f', str(name)]
-        cls.newCommand.run()
+        return cls.newCommand.run()
 
     @classmethod
     def create_alters(cls, names):
+        result = []
         cls.init()
         for name in names:
-            cls.create_alter(name)
+            inner = cls.create_alter(name)
+            result.append(inner)
             sleep(0.1)
+        return result
 
     @classmethod
     def run_alters(cls):

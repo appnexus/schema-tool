@@ -11,8 +11,9 @@ try:
 except ImportError, e:
     pass
 
-# Local imports
+# local imports
 from db import Db
+from errors import DbError
 
 class MySQLDb(Db):
     @classmethod
@@ -24,9 +25,8 @@ class MySQLDb(Db):
                                                  cls.config['history_table_name'])
             cls.db_name = '`%s`' % cls.config['revision_db_name']
         else:
-            sys.stderr.write('No history schema found in config file. Please add values for the '
-                             'following keys: revision_db_name, history_table_name\n')
-            sys.exit(1)
+            raise DbError('No history schema found in config file. Please add values for the '
+                          'following keys: revision_db_name, history_table_name\n')
 
 
         return cls
@@ -37,8 +37,7 @@ class MySQLDb(Db):
         try:
           mysql
         except NameError:
-          sys.stderr.write('MySQL module not found/loaded. Please make sure all dependencies are installed\n')
-          sys.exit(1)
+          raise DbError('MySQL module not found/loaded. Please make sure all dependencies are installed\n')
 
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
@@ -58,8 +57,7 @@ class MySQLDb(Db):
               cursor.execute(query)
         except mysql.connector.Error, e:
             sys.stderr.write(query)
-            sys.stderr.write('\nCould not query DB: %s\n' % e)
-            sys.exit(1)
+            raise DbError('\nCould not query DB: %s\n' % e)
 
         try:
           res = cursor.fetchall()
@@ -126,10 +124,10 @@ class MySQLDb(Db):
         except mysql.connector.InterfaceError, ex:
             sys.stderr.write('Unable to connect to mysql: %s\n' % ex)
             sys.stderr.write('Ensure that the server is running and you can connect normally\n')
-            sys.exit(1)
+            raise DbError("Cannot connect to MySQL Db (1)")
         except mysql.connector.ProgrammingError, ex:
             sys.stderr.write('Could not connect to mysql: %s\n' % ex)
-            sys.exit(1)
+            raise DbError("Cannot connect to MySQL Db (2)")
         except db_errors.DatabaseError, er:
             sys.stderr.write('Could not connect to mysql: %s, %s\n\n' % (er.errno, er.msg))
             if er.errno == -1 and re.compile('.*insecure.*').match(er.msg) is not None:
@@ -137,7 +135,7 @@ class MySQLDb(Db):
                 sys.stderr.write("Your MySQL version may be running with old_password compatibility mode."
                                  "\nPlease check your CNF files and if necessary change the setting, restart,"
                                  "\nand create a new-user or update your existing users to use new auth.\n")
-            sys.exit(1)
+            raise DbError("Cannot connect to MySQL Db (3)")
 
         return conn
 
@@ -150,4 +148,3 @@ class MySQLDb(Db):
             cmd.append('-p%s' % cls.config['password'])
         my_env = None
         return cmd, my_env
-
