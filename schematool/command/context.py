@@ -27,8 +27,8 @@ class CommandContext:
             elif config['type'] == 'memory-db':
                 db = MemoryDb.new(config)
             else:
-                raise InvalidDBTypeError("Invalid database type in config. Only \
-                                  'postgres' and 'mysql' are allowed.")
+                raise InvalidDBTypeError("Invalid database type in config. Only "
+                                         "'postgres' and 'mysql' are allowed.")
         else:
             db = MySQLDb.new(config)
 

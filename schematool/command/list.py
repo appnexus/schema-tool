@@ -21,7 +21,9 @@ class ListCommand(Command):
 
     def run(self):
         """
-        List the current build chain in the console
+        Print the current build chain in the console.
+
+        Return the list of node IDs, which is used for testing.
         """
         # TODO: add a verbose mode, which shows alters as having been run or not
 
@@ -33,10 +35,11 @@ class ListCommand(Command):
 
         self.__set_is_applied_flag(list_tail)
 
+        result = []
+
         if list_tail is None:
             sys.stdout.write("No alters found\n")
         else:
-            result = []
             normal_str = []
             temp_node = list_tail
             while temp_node is not None:
@@ -47,7 +50,8 @@ class ListCommand(Command):
                 normal_str.reverse()
                 result.reverse()
             sys.stdout.write("\n".join(normal_str) + "\n")
-            return result
+
+        return result
 
     def __set_is_applied_flag(self, chain):
         """

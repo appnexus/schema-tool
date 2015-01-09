@@ -4,7 +4,6 @@ import sys
 
 # local imports
 from errors import AppliedAlterError
-from util import System
 
 # TODO: Move connection management to schema.py. Instantiate a connection
 # before each run() method and close it at the end, using the DB.conn() method.
@@ -63,6 +62,7 @@ class Db(object):
 
     @classmethod
     def _run_file(cls, filename, exit_on_error=True, verbose=False):
+        # Used for testing to simulate an error in the running of an alter file
         if getattr(cls, 'auto_throw_error', False) and 'error' in filename:
             command, my_env = cls.run_file_cmd_with_error()
         else:

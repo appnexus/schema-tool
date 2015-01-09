@@ -2,14 +2,12 @@
 from optparse import OptionParser
 import os
 import re
-import sys
 
 # local imports
 from command import Command
 from constants import Constants
-from errors import MissingDownAlterError, MissingUpAlterError
+from errors import MissingDownAlterError, MissingUpAlterError, MissingRefError
 from util import ChainUtil
-from util import System
 
 class CheckCommand(Command):
     def init_parser(self):
@@ -59,8 +57,7 @@ class CheckCommand(Command):
             if up_alter.search(file) is not None:
                 if file not in chain_files:
                     # @jmurray - how can scenario be encountered?
-                    sys.stderr.write("File not found within build-chain '%s'\n" % file)
-                    System.exit(1)
+                    raise MissingRefError("File not found within build-chain '%s'" % file)
 
     def check_missing_pair(self):
         """

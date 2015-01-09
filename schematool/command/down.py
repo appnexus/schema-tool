@@ -38,9 +38,7 @@ class DownCommand(Command):
 
         # check validity of options (can't really do this in OptionParser AFAIK)
         if len(args) == 0 and options.N is None:
-            sys.stderr.write("Error: must specify either argument or number of down-alters to run\n\n")
-            self.parser.print_help()
-            raise OptionsError()
+            raise OptionsError("must specify either argument or number of down-alters to run", self.parser.format_help())
 
         # get current history
         history = self.db.get_commit_history()

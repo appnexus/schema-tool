@@ -6,7 +6,7 @@ import sys
 # local imports
 from command import Command
 from constants import Constants
-from errors import ReadError
+from errors import MissingRefError, ReadError
 from util import ChainUtil
 
 class GenSqlCommand(Command):
@@ -73,9 +73,7 @@ class GenSqlCommand(Command):
         for ref in refs:
             node = self._find_ref(ref, nodes)
             if node is False:
-                sys.stderr.write("Error: Ref '%s' could not be found" % ref)
-                self.parser.print_help()
-                raise MissingRefError()
+                raise MissingRefError("Ref '%s' could not be found" % ref, self.parser.format_help())
             else:
                 ref_nodes.append(node)
 

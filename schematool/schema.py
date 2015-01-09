@@ -75,28 +75,29 @@ def main():
         handler = [c['handler'] for c in Constants.COMMANDS if c['command'] == user_command][0]
         try:
             globals()[handler](context).run()
-        except SystemExit:
-            sys.exit(1)
-        except EnvironmentError, er:
-            sys.stderr.write(
-                "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
-                    Constants.ISSUE_URL))
-            sys.stderr.write("Error: %s, %s\n\n" % (er.errno, er.strerror))
-            sys.exit(1)
+
+        # Errors that are caught by the application code
         except tuple([i[1] for i in inspect.getmembers(errors) if inspect.isclass(i[1])]), e:
-            sys.stderr.write("Error: %s\n\n" % e.message)
+            sys.stderr.write("Error: ")
+            for i in e.args:
+                sys.stderr.write("%s\n\n" % i)
             sys.exit(1)
 
-        except Exception, ex:
+        # Uncaught errors
+        except (Exception, EnvironmentError), ex:
             sys.stderr.write(
                 "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
                     Constants.ISSUE_URL))
-            sys.stderr.write("Error: %s\n\n" % ex)
-            print_exc()
+            if isinstance(ex, EnvironmentError):
+                sys.stderr.write("Error: %s, %s\n\n" % (er.errno, er.strerror))
+            else:
+                sys.stderr.write("Error: %s\n\n" % ex)
+                print_exc()
             sys.exit(1)
     else:
         sys.stderr.write("No command '%s' defined\n\n" % sys.argv[1])
         parser.print_help()
+        sys.exit(1)
 
 def load_config():
     """

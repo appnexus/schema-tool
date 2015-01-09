@@ -1,5 +1,4 @@
 import re
-import sys
 
 from constants import Constants
 

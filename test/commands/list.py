@@ -7,7 +7,6 @@ import unittest
 import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../schematool')
 sys.path.append(import_path)
 from command import CommandContext, ListCommand
-from util import System
 
 # test util imports
 import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../util')
@@ -23,13 +22,9 @@ class ListTest(unittest.TestCase):
         self.context = CommandContext.via({
           'type': 'memory-db'})
         self.listCommand = ListCommand(self.context)
-        System.set_test(True)
 
     def tearDown(self):
         EnvironmentUtil.teardown_fresh_test_env()
-
-    def test_simple(self):
-        self.assertEquals(1,1)
 
     def test_order(self):
         id1, id2 = AlterUtil.create_alters([1, 2])

@@ -1,7 +1,6 @@
 # stdlib imports
 import os
 import sys
-import re
 
 try:
     import psycopg2

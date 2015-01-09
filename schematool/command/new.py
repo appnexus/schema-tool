@@ -29,7 +29,7 @@ class NewCommand(Command):
         Note: This command assumes a starting point that has been created
         manually (and a working db directory exists)
 
-        Return the timestamp, or node ID, of the created files.
+        Return the node ID of the created files, which is used for testing.
         """
         (options, args) = self.parser.parse_args()
 
@@ -50,7 +50,7 @@ class NewCommand(Command):
             alter_file.write("-- ref: %s\n" % timestamp)
             alter_file.write("\n\n\n")
         except OSError, ex:
-            raise WriteError("Error writing file '%s'\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
+            raise WriteError("Could not write file '%s'\n\t=>%s" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
         sys.stdout.write("Created file: %s\n" % up_filename)
 
         down_filename = filename + '-down.sql'
@@ -62,7 +62,7 @@ class NewCommand(Command):
             alter_file.write("-- ref: %s\n" % timestamp)
             alter_file.write("\n\n\n")
         except OSError, ex:
-            raise WriteError("Error writing file '%s'\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
+            raise WriteError("Could not write file '%s'\n\t=>%s" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
         sys.stdout.write("Created file: %s\n" % down_filename)
 
         return timestamp

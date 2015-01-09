@@ -9,7 +9,6 @@ sys.path.append(import_path)
 from command import CommandContext, UpCommand
 from db import MemoryDb
 from errors import MissingRefError, AppliedAlterError
-from util import System
 
 # test util imports
 import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../util')
@@ -25,7 +24,6 @@ class UpTest(unittest.TestCase):
         self.context = CommandContext.via({
           'type': 'memory-db'})
         self.upCommand  = UpCommand(self.context)
-        System.set_test(True)
 
     def tearDown(self):
         EnvironmentUtil.teardown_fresh_test_env()

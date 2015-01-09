@@ -30,3 +30,15 @@ class WriteError(Exception):
 
 class OptionsError(Exception):
     pass
+
+class ArgsError(Exception):
+    pass
+
+class DuplicateRefsError(Exception):
+    pass
+
+class HeadError(Exception):
+    pass
+
+class CircularRefError(Exception):
+    pass

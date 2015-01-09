@@ -9,7 +9,7 @@ sys.path.append(import_path)
 from command import DownCommand, CommandContext, NewCommand
 from command import UpCommand, CheckCommand
 from errors import MissingDownAlterError, MissingUpAlterError
-from util import System, ChainUtil
+from util import ChainUtil
 
 # test util imports
 import_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../util')
@@ -28,7 +28,6 @@ class CheckTest(unittest.TestCase):
         self.newCommand = NewCommand(self.context)
         self.upCommand  = UpCommand(self.context)
         self.checkCommand  = CheckCommand(self.context)
-        System.set_test(True)
 
     def tearDown(self):
         EnvironmentUtil.teardown_fresh_test_env()

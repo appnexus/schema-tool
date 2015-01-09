@@ -8,10 +8,11 @@ from subprocess import PIPE
 import sys
 
 # local imports
-from command import Command
-from gen_ref import GenRefCommand
 from check import CheckCommand
+from command import Command
 from constants import Constants
+from errors import ArgsError, MissingRefError
+from gen_ref import GenRefCommand
 from util import ChainUtil, MetaDataUtil
 
 class ResolveCommand(Command):
@@ -56,9 +57,7 @@ class ResolveCommand(Command):
         (options, args) = self.parser.parse_args()
 
         if len(args) == 0:
-            sys.stderr.write("You must provide a filename or reference\n")
-            self.parser.print_help()
-            sys.exit(1)
+            raise ArgsError("You must provide a filename or reference", self.parser.format_help())
 
         # search for file/ref
         self.file = self.ref = args[0]
@@ -67,8 +66,7 @@ class ResolveCommand(Command):
         elif self._ref_exists():
             self.type = 'ref'
         else:
-            sys.stderr.write("Filename or reference not found for '%s'\n" % self.file)
-            sys.exit(1)
+            raise MissingRefError("Filename or reference not found for '%s'" % self.file)
 
         # We can now assume that self.ref and self.file are set properly
 
@@ -140,6 +138,7 @@ class ResolveCommand(Command):
         """
         # TODO: implement. probably need to factor out soft-chain validation
         self._collect_soft_chain()
+        # TODO - raise an error from errors.py here.
         sys.exit(1)
 
     def _collect_soft_chain(self):
@@ -156,7 +155,7 @@ class ResolveCommand(Command):
     def _relocate_sub_chain(self):
         """
         Given a ref and filename to start from, we need to relocate a
-        sub-chain (that is in conflict to the end of the current alter-chain.
+        sub-chain (that is in conflict to the end of the current alter-chain).
         """
         self._collect_soft_chain()
 
