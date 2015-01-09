@@ -5,7 +5,7 @@ import sys
 # local imports
 from command import Command
 from check import CheckCommand
-from errors import MissingUpAlterError, MissingRefError, MultipleDownAltersError
+from errors import MissingRefError, MultipleDownAltersError
 from util import ChainUtil
 
 class UpCommand(Command):
@@ -87,26 +87,19 @@ class UpCommand(Command):
                 for (_id, alter_id, datetime) in uncommon_history:
                     alters = [a for a in alter_list if a.id == alter_id]
                     if len(alters) > 1:
-                        sys.stderr.write("Multiple alters found for a single id ("
-                                + a.id + ")\n")
+                        msg = "Multiple alters found for a single id (%s)" % a.id
                         if not options.force:
-                            raise MultipleDownAltersError()
+                            raise MultipleDownAltersError(msg)
+                        else:
+                            sys.stderr.write(msg + "\n")
                     alter = alters[0]
                     self.db.run_down(alter)
                     if alter.id in history_alters: history_alters.remove(alter.id)
 
-        # Fail if a target ref is provided but is not in the list of alters to run
-        if len(alter_list) and len(args) > 0:
-            target_rev = args[0]
-            fail = not any([target_rev == alter.id for alter in alter_list])
-            if fail:
-                raise MissingRefError('revision (%s) not found in alters that would be run' 
-                                      % target_rev)
-
         # Ensure that if a target ref was specified that one was found in
         # in the list of alters to run (up)
         if len(alter_list) and len(args) and args[0] not in [a.id for a in alter_list]:
-            raise MissingRefError('revision (%s) not found in alters' % args[0])
+            raise MissingRefError('revision (%s) not found in alters that would be run' % args[0])
 
         # Do alters that are in the alter-chain and have not
         # been run yet
