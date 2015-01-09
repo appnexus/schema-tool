@@ -88,10 +88,8 @@ class DownCommand(Command):
 
         # ensure that if a target_revision was specified that one was found in
         # in the list of alters to run (down)
-        if run_type == 'revision' and \
-           target_rev not in [a.id for a in down_alters_to_run]:
-            sys.stderr.write(
-                    'Error: revision (%s) not found in alters' % target_rev)
+        if (run_type == 'revision' and
+              target_rev not in [a.id for a in down_alters_to_run]):
             raise MissingRefError('revision (%s) not found in alters' % target_rev)
 
         # run all the down-alters that we have collected
@@ -101,7 +99,7 @@ class DownCommand(Command):
                         verbose=options.verbose)
 
         sys.stdout.write("Downgraded\n")
-    
+
     def parse_args(self, args):
         run_type = None
         target_rev = None

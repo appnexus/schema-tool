@@ -56,8 +56,7 @@ class MySQLDb(Db):
             else:
               cursor.execute(query)
         except mysql.connector.Error, e:
-            sys.stderr.write(query)
-            raise DbError('\nCould not query DB: %s\n' % e)
+            raise DbError('Could not query DB. Exception:\n%s\n\nQuery:%s' % (e, query))
 
         try:
           res = cursor.fetchall()
@@ -122,20 +121,20 @@ class MySQLDb(Db):
                                                host=config['host'],
                                                port=config['port'])
         except mysql.connector.InterfaceError, ex:
-            sys.stderr.write('Unable to connect to mysql: %s\n' % ex)
-            sys.stderr.write('Ensure that the server is running and you can connect normally\n')
-            raise DbError("Cannot connect to MySQL Db (1)")
+            raise DbError("Cannot connect to MySQL Db (1): %s\n"
+                          "Ensure that the server is running and you can connect normally" % ex)
         except mysql.connector.ProgrammingError, ex:
-            sys.stderr.write('Could not connect to mysql: %s\n' % ex)
-            raise DbError("Cannot connect to MySQL Db (2)")
+            raise DbError("Cannot connect to MySQL Db (2): %s" % ex)
         except db_errors.DatabaseError, er:
-            sys.stderr.write('Could not connect to mysql: %s, %s\n\n' % (er.errno, er.msg))
+            base = 'Cannot not connect to MySQL Db (3): %s, %s\n\n' % (er.errno, er.msg)
             if er.errno == -1 and re.compile('.*insecure.*').match(er.msg) is not None:
                 # print some instructions on connecting with new mode
-                sys.stderr.write("Your MySQL version may be running with old_password compatibility mode."
-                                 "\nPlease check your CNF files and if necessary change the setting, restart,"
-                                 "\nand create a new-user or update your existing users to use new auth.\n")
-            raise DbError("Cannot connect to MySQL Db (3)")
+                additional = ("Your MySQL version may be running with old_password compatibility mode."
+                              "\nPlease check your CNF files and if necessary change the setting, restart,"
+                              "\nand create a new-user or update your existing users to use new auth.")
+                raise DbError(base, additional)
+            else:
+                raise DbError(base)
 
         return conn
 

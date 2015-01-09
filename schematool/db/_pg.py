@@ -142,9 +142,9 @@ class PostgresDb(Db):
             conn_string = ' '.join(conn_string_parts) % tuple(conn_string_params)
             conn = psycopg2.connect(conn_string)
         except Exception, e:
-            sys.stderr.write('Unable to connect to psql: %s\n' % e.message)
-            sys.stderr.write('Ensure that the server is running and you can connect normally\n')
-            raise DbError("Cannot connect to Postgres Db (3)")
+            raise DbError("Cannot connect to Postgres Db: %s\n"
+                          "Ensure that the server is running and you can connect normally"
+                          % e.message)
 
         return conn
 
