@@ -7,6 +7,7 @@ from time import time
 # local imports
 from command import Command
 from constants import Constants
+from errors import WriteError
 from util import ChainUtil
 
 class NewCommand(Command):
@@ -21,12 +22,14 @@ class NewCommand(Command):
 
     def run(self):
         """
-        Run the "new" command as if it were it's own executable. This means
+        Run the "new" command as if it were its own executable. This means
         processing any options and performing the task of creating a new
         alter file.
 
         Note: This command assumes a starting point that has been created
-        manually (and a working db-directory)
+        manually (and a working db directory exists)
+
+        Return the node ID of the created files, which is used for testing.
         """
         (options, args) = self.parser.parse_args()
 
@@ -47,8 +50,7 @@ class NewCommand(Command):
             alter_file.write("-- ref: %s\n" % timestamp)
             alter_file.write("\n\n\n")
         except OSError, ex:
-            sys.stderr.write("Error writing file '%s'\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
-            sys.exit(1)
+            raise WriteError("Could not write file '%s'\n\t=>%s" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
         sys.stdout.write("Created file: %s\n" % up_filename)
 
         down_filename = filename + '-down.sql'
@@ -60,6 +62,7 @@ class NewCommand(Command):
             alter_file.write("-- ref: %s\n" % timestamp)
             alter_file.write("\n\n\n")
         except OSError, ex:
-            sys.stderr.write("Error writing file '%s'\n\t=>%s\n" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
-            sys.exit(1)
+            raise WriteError("Could not write file '%s'\n\t=>%s" % (os.path.join(Constants.ALTER_DIR, up_filename), ex.message))
         sys.stdout.write("Created file: %s\n" % down_filename)
+
+        return timestamp

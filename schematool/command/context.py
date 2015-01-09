@@ -1,8 +1,6 @@
-# stdlib imports
-import sys
-
 # local imports
 from db import MySQLDb, PostgresDb, MemoryDb
+from errors import InvalidDBTypeError
 
 class CommandContext:
     """
@@ -29,9 +27,8 @@ class CommandContext:
             elif config['type'] == 'memory-db':
                 db = MemoryDb.new(config)
             else:
-                sys.stderr.write("Invalid database type in config. Only \
-                                  'postgres' and 'mysql' are allowed.")
-                sys.exit(1)
+                raise InvalidDBTypeError("Invalid database type in config. Only "
+                                         "'postgres' and 'mysql' are allowed.")
         else:
             db = MySQLDb.new(config)
 

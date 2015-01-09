@@ -30,3 +30,7 @@ class EnvironmentUtil:
         shutil.rmtree(cls.env_folder)
 
         Constants.ALTER_DIR = cls.current_dir
+
+    @classmethod
+    def get_alter_dir(cls):
+        return Constants.ALTER_DIR

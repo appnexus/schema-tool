@@ -8,6 +8,7 @@
 # of the project.
 
 
+import inspect
 import sys
 
 (v_major, v_minor, _, _, _) = sys.version_info
@@ -22,8 +23,9 @@ else:
 from optparse import OptionParser
 from traceback import print_exc
 
-# loal imports
+# local imports
 from command import *
+import errors
 
 
 def main():
@@ -37,7 +39,7 @@ def main():
     commands = [
         "  new         Create a new alter",
         "  check       Check that all back-refs constitute a valid chain",
-        "  list        List the current alter-chain",
+        "  list        List the current alter chain",
         "  up          Bring up to particular revision",
         "  down        Roll back to a particular revision",
         "  rebuild     Run the entire database down and back up (hard refresh)",
@@ -74,24 +76,29 @@ def main():
         handler = [c['handler'] for c in Constants.COMMANDS if c['command'] == user_command][0]
         try:
             globals()[handler](context).run()
-        except SystemExit:
+
+        # Errors that are caught by the application code
+        except tuple([i[1] for i in inspect.getmembers(errors) if inspect.isclass(i[1])]), e:
+            sys.stderr.write("Error: ")
+            for i in e.args:
+                sys.stderr.write("%s\n\n" % i)
             sys.exit(1)
-        except EnvironmentError, er:
+
+        # Uncaught errors
+        except (Exception, EnvironmentError), ex:
             sys.stderr.write(
                 "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
                     Constants.ISSUE_URL))
-            sys.stderr.write("Error: %s, %s\n\n" % (er.errno, er.strerror))
-            sys.exit(1)
-        except Exception, ex:
-            sys.stderr.write(
-                "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
-                    Constants.ISSUE_URL))
-            sys.stderr.write("Error: %s\n\n" % ex)
-            print_exc()
+            if isinstance(ex, EnvironmentError):
+                sys.stderr.write("Error: %s, %s\n\n" % (er.errno, er.strerror))
+            else:
+                sys.stderr.write("Error: %s\n\n" % ex)
+                print_exc()
             sys.exit(1)
     else:
         sys.stderr.write("No command '%s' defined\n\n" % sys.argv[1])
         parser.print_help()
+        sys.exit(1)
 
 def load_config():
     """
@@ -102,12 +109,11 @@ def load_config():
         try:
             config = json.load(config_file)
         except ValueError, ex:
-            sys.stderr.write("Could not parse config file: %s\n" % ex.message)
-            sys.exit(1)
+            raise ConfigFileError("could not parse config file: %s\n" % ex.message)
     except IOError, ex:
         sys.stderr.write("Error reading config: %s\n" % ex.strerror)
         sys.stderr.write("Tried reading: %s\n" % Constants.CONFIG_FILE)
-        sys.exit(1)
+        raise ConfigFileError("could not read config file")
     return config
 
 

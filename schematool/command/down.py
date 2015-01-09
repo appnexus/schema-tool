@@ -1,15 +1,12 @@
 # stdlib imports
 from optparse import OptionParser
-import os
 import sys
-from time import time
 
 # local imports
 from command import Command
 from check import CheckCommand
-from constants import Constants
+from errors import MissingDownAlterError, MissingRefError, OptionsError
 from util import ChainUtil
-from util import System
 
 class DownCommand(Command):
     def init_parser(self):
@@ -41,15 +38,13 @@ class DownCommand(Command):
 
         # check validity of options (can't really do this in OptionParser AFAIK)
         if len(args) == 0 and options.N is None:
-            sys.stderr.write("Error: must specify either argument or number of down-alters to run\n\n")
-            self.parser.print_help()
-            sys.exit(1)
+            raise OptionsError("must specify either argument or number of down-alters to run", self.parser.format_help())
 
         # get current history
         history = self.db.get_commit_history()
         history = sorted(history, key=lambda h: h[0], reverse=True)
 
-        # get current alter-chain
+        # get current alter chain
         tail = ChainUtil.build_chain()
         alter_list = [tail]
         if None in alter_list:
@@ -89,17 +84,13 @@ class DownCommand(Command):
                     sys.stderr.write("Warning: missing alter: %s\n" % alter_id)
                     self.db.remove_commit(ref=alter_id)
                 else:
-                    sys.stderr.write("Error: missing alter: %s\n" % alter_id)
-                    sys.exit(1)
+                    raise MissingDownAlterError("missing alter: %s\n" % alter_id)
 
         # ensure that if a target_revision was specified that one was found in
         # in the list of alters to run (down)
-        if run_type == 'revision' and \
-           target_rev not in [a.id for a in down_alters_to_run]:
-            sys.stderr.write(
-                    'Error: revision (%s) not found in alters' % target_rev)
-            # sys.exit(1)
-            System.exit(1)
+        if (run_type == 'revision' and
+              target_rev not in [a.id for a in down_alters_to_run]):
+            raise MissingRefError('revision (%s) not found in alters that would be run' % target_rev)
 
         # run all the down-alters that we have collected
         for alter_to_run in down_alters_to_run:
@@ -108,7 +99,7 @@ class DownCommand(Command):
                         verbose=options.verbose)
 
         sys.stdout.write("Downgraded\n")
-    
+
     def parse_args(self, args):
         run_type = None
         target_rev = None

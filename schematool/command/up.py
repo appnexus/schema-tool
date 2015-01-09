@@ -1,13 +1,11 @@
 # stdlib imports
 from optparse import OptionParser
-import os
 import sys
-from time import time
 
 # local imports
 from command import Command
 from check import CheckCommand
-from constants import Constants
+from errors import MissingRefError, MultipleDownAltersError, MissingDownAlterError
 from util import ChainUtil
 
 class UpCommand(Command):
@@ -40,7 +38,7 @@ class UpCommand(Command):
         Returns nothing, but updated DB (via alters) and updated revision number
         in DB table
 
-        Now that we have the history of what has _been_ run and the alter-chain
+        Now that we have the history of what has _been_ run and the alter chain
         of all alters, we can determine what _needs_ to be run. First we will
         go up the history until it diverges with the chain. Then we'll run all
         of the "undos" for any history items that still exist and then run the
@@ -55,7 +53,7 @@ class UpCommand(Command):
         history = sorted(history, key=lambda h: h[0])
         history_alters = [h[1] for h in history]
 
-        # get current alter-chain
+        # get current alter chain
         tail = ChainUtil.build_chain()
         alter_list = [tail]
         if None in alter_list:
@@ -89,21 +87,29 @@ class UpCommand(Command):
                 for (_id, alter_id, datetime) in uncommon_history:
                     alters = [a for a in alter_list if a.id == alter_id]
                     if len(alters) > 1:
-                        sys.stderr.write("Multiple alters found for a single id (" 
-                                + a.id + ")\n")
+                        msg = "Multiple alters found for a single id (%s)" % a.id
                         if not options.force:
-                            sys.exit(1)
+                            raise MultipleDownAltersError(msg)
+                        else:
+                            sys.stderr.write(msg + "\n")
+                    elif len(alters) == 0:
+                        raise MissingDownAlterError("Missing down alter %s" % alter_id)
                     alter = alters[0]
                     self.db.run_down(alter)
-                    if alter.id in history_alters: history_alters.remove(alter.id)
+                    if alter.id in history_alters:
+                        history_alters.remove(alter.id)
 
+        # Ensure that if a target ref was specified that one was found in
+        # in the list of alters to run (up)
+        if len(alter_list) and len(args) and args[0] not in [a.id for a in alter_list]:
+            raise MissingRefError('revision (%s) not found in alters that would be run' % args[0])
 
-        # do alters that are in the alter-chain and have not
-        # ben run yet
-        max = int(options.N or len(alter_list))
+        # Do alters that are in the alter chain and have not
+        # been run yet
+        max_ = int(options.N or len(alter_list))
         i = 0
         while not len(alter_list) == 0:
-            if i == max:
+            if i == max_:
                 break
 
             alter = alter_list.pop()
@@ -111,7 +117,7 @@ class UpCommand(Command):
             if len(args) > 0:
                 target_rev = args[0]
                 if target_rev == alter.id:
-                    i = (max - 1)
+                    i = (max_ - 1)
 
             i += 1
             if alter.id not in history_alters and self.should_run(alter):
