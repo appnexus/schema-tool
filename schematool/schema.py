@@ -8,6 +8,7 @@
 # of the project.
 
 
+import inspect
 import sys
 
 (v_major, v_minor, _, _, _) = sys.version_info
@@ -24,7 +25,7 @@ from traceback import print_exc
 
 # local imports
 from command import *
-from errors import *
+import errors
 
 
 def main():

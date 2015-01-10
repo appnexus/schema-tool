@@ -90,7 +90,7 @@ class DownCommand(Command):
         # in the list of alters to run (down)
         if (run_type == 'revision' and
               target_rev not in [a.id for a in down_alters_to_run]):
-            raise MissingRefError('revision (%s) not found in alters' % target_rev)
+            raise MissingRefError('revision (%s) not found in alters that would be run' % target_rev)
 
         # run all the down-alters that we have collected
         for alter_to_run in down_alters_to_run:

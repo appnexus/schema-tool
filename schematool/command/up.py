@@ -5,7 +5,7 @@ import sys
 # local imports
 from command import Command
 from check import CheckCommand
-from errors import MissingRefError, MultipleDownAltersError
+from errors import MissingRefError, MultipleDownAltersError, MissingDownAlterError
 from util import ChainUtil
 
 class UpCommand(Command):
@@ -92,6 +92,8 @@ class UpCommand(Command):
                             raise MultipleDownAltersError(msg)
                         else:
                             sys.stderr.write(msg + "\n")
+                    elif len(alters) == 0:
+                        raise MissingDownAlterError("Missing down alter %s" % alter_id)
                     alter = alters[0]
                     self.db.run_down(alter)
                     if alter.id in history_alters:
