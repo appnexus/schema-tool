@@ -74,7 +74,20 @@ class MySQLDb(Db):
 
     @classmethod
     def create_revision(cls):
-        return cls.execute('CREATE DATABASE IF NOT EXISTS %s' % cls.db_name)
+        # Executing 'CREATE DATABASE IF NOT EXISTS' fails if the user does not
+        # have database creation privileges, even if the database already
+        # exists.  The correct action is to break this method into two parts:
+        # checking if the database exists, and then creating it only if it does
+        # not.
+        #
+        # The 'IF NOT EXISTS' flag is still used in case the database is
+        # created after the existence check but before the CREATE statement.
+        check = "SELECT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = %s)"
+        result = cls.execute(check, [cls.config['revision_db_name']])
+        if result[0] == (1,):
+            return
+        else:
+            return cls.execute('CREATE DATABASE IF NOT EXISTS %s' % cls.db_name)
 
     @classmethod
     def get_commit_history(cls):

@@ -29,10 +29,10 @@ class PostgresDb(Db):
     @classmethod
     def init_conn(cls):
         try:
-          psycopg2
+            psycopg2
         except NameError:
-          sys.stderr.write('Postgres module not found/loaded. Please make sure all dependencies are installed\n')
-          sys.exit(1)
+            sys.stderr.write('Postgres module not found/loaded. Please make sure all dependencies are installed\n')
+            sys.exit(1)
 
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
@@ -84,7 +84,19 @@ class PostgresDb(Db):
 
     @classmethod
     def create_revision(cls):
-        return cls.execute('CREATE SCHEMA IF NOT EXISTS %s' % cls.config['revision_schema_name'])
+        # Executing 'CREATE SCHEMA IF NOT EXISTS' fails if the user does not
+        # have schema creation privileges, even if the schema already exists.
+        # The correct action is to break this method into two parts: checking
+        # if the schema exists, and then creating it only if it does not.
+        #
+        # The 'IF NOT EXISTS' flag is still used in case the database is
+        # created after the existence check but before the CREATE statement.
+        check = "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = %s)"
+        result = cls.execute(check, [cls.config['revision_schema_name']])
+        if result[0] == (True,):
+            return
+        else:
+            return cls.execute('CREATE SCHEMA IF NOT EXISTS %s' % cls.config['revision_schema_name'])
 
     @classmethod
     def get_commit_history(cls):
