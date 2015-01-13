@@ -6,7 +6,7 @@ from constants import *
 
 class SimpleNode:
     """
-    Represents a simple node within the alter-chain. Just makes things
+    Represents a simple node within the alter chain. Just makes things
     a little easier and what not.
     """
     def __init__(self, id, filename):

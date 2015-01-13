@@ -20,10 +20,10 @@ class CheckCommand(Command):
 
     def run(self, inline=False):
         """
-        Check that the alter-chain is valid
+        Check that the alter chain is valid
 
         """
-        # TODO  Check that the alter-chain is in line with the DB (but not necessarily up to date)
+        # TODO  Check that the alter chain is in line with the DB (but not necessarily up to date)
         # TODO  Make the verbose flag do something based on previous additions
         # TODO  Add flags to only perform certain checks (as described in the other todos)
 
@@ -44,7 +44,7 @@ class CheckCommand(Command):
 
     def check_abandoned_alters(self, chain):
         """
-        Check for files that do not exist within the current alter-chain.
+        Check for files that do not exist within the current alter chain.
         """
         tail = chain
         chain_files = []

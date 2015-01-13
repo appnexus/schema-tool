@@ -15,7 +15,7 @@ class ListCommand(Command):
 
         parser.add_option('-r', '--reverse',
                           action='store_true', dest='listReverse', default=False,
-                          help="List the contents of current alter-chain in reverse order")
+                          help="List the contents of current alter chain in reverse order")
 
         self.parser = parser
 

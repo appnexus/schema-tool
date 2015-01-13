@@ -41,8 +41,8 @@ class ResolveCommand(Command):
             and then attempt to automatically resolve the issue. The current items that
             will be attempted to address include (in order of how they would be addressed):
                 - filename standards     => attempt to rename file to meet standards
-                - divergent chains       => append to end of alter-chain and rename file
-                - abandoned alters       => append to end of alter-chain and rename file
+                - divergent chains       => append to end of alter chain and rename file
+                - abandoned alters       => append to end of alter chain and rename file
                 - missing up/down        => create the missing pair
 
         Current Functionality:
@@ -155,7 +155,7 @@ class ResolveCommand(Command):
     def _relocate_sub_chain(self):
         """
         Given a ref and filename to start from, we need to relocate a
-        sub-chain (that is in conflict to the end of the current alter-chain).
+        sub-chain (that is in conflict to the end of the current alter chain).
         """
         self._collect_soft_chain()
 

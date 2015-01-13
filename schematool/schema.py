@@ -39,7 +39,7 @@ def main():
     commands = [
         "  new         Create a new alter",
         "  check       Check that all back-refs constitute a valid chain",
-        "  list        List the current alter-chain",
+        "  list        List the current alter chain",
         "  up          Bring up to particular revision",
         "  down        Roll back to a particular revision",
         "  rebuild     Run the entire database down and back up (hard refresh)",

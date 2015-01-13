@@ -38,7 +38,7 @@ class UpCommand(Command):
         Returns nothing, but updated DB (via alters) and updated revision number
         in DB table
 
-        Now that we have the history of what has _been_ run and the alter-chain
+        Now that we have the history of what has _been_ run and the alter chain
         of all alters, we can determine what _needs_ to be run. First we will
         go up the history until it diverges with the chain. Then we'll run all
         of the "undos" for any history items that still exist and then run the
@@ -53,7 +53,7 @@ class UpCommand(Command):
         history = sorted(history, key=lambda h: h[0])
         history_alters = [h[1] for h in history]
 
-        # get current alter-chain
+        # get current alter chain
         tail = ChainUtil.build_chain()
         alter_list = [tail]
         if None in alter_list:
@@ -104,7 +104,7 @@ class UpCommand(Command):
         if len(alter_list) and len(args) and args[0] not in [a.id for a in alter_list]:
             raise MissingRefError('revision (%s) not found in alters that would be run' % args[0])
 
-        # Do alters that are in the alter-chain and have not
+        # Do alters that are in the alter chain and have not
         # been run yet
         max_ = int(options.N or len(alter_list))
         i = 0

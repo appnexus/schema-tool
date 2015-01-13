@@ -44,7 +44,7 @@ class DownCommand(Command):
         history = self.db.get_commit_history()
         history = sorted(history, key=lambda h: h[0], reverse=True)
 
-        # get current alter-chain
+        # get current alter chain
         tail = ChainUtil.build_chain()
         alter_list = [tail]
         if None in alter_list:
