@@ -8,4 +8,3 @@
 
 from chain import *
 from metadata import *
-from system import *
