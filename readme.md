@@ -311,7 +311,7 @@ uses one of the [appropriate identifiers][4] to link the pull request to the iss
 
 ## License
 
-__ToDo__: Determine what license is appropriate
+See LICENSE file
 
 
 
