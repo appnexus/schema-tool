@@ -35,7 +35,7 @@ exit_if_err() {
 # be performed.
 
 ORIG_DIR=$(pwd)
-HOOK_DIR=$(dirname $(readlink $0))
+HOOK_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd $HOOK_DIR
 
 STAGED_FILES=$(cd $ORIG_DIR && git diff --cached --name-only --relative --diff-filter=ACMR)
