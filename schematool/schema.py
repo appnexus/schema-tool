@@ -90,7 +90,7 @@ def main():
                 "An exception has occurred... Sorry. You should file a ticket in\nour issue tracker: %s\n\n" % (
                     Constants.ISSUE_URL))
             if isinstance(ex, EnvironmentError):
-                sys.stderr.write("Error: %s, %s\n\n" % (er.errno, er.strerror))
+                sys.stderr.write("Error: %s, %s\n\n" % (ex.errno, ex.strerror))
             else:
                 sys.stderr.write("Error: %s\n\n" % ex)
                 print_exc()
