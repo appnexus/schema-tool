@@ -109,11 +109,11 @@ def load_config():
         try:
             config = json.load(config_file)
         except ValueError, ex:
-            raise ConfigFileError("could not parse config file: %s\n" % ex.message)
+            raise errors.ConfigFileError("could not parse config file: %s\n" % ex.message)
     except IOError, ex:
         sys.stderr.write("Error reading config: %s\n" % ex.strerror)
         sys.stderr.write("Tried reading: %s\n" % Constants.CONFIG_FILE)
-        raise ConfigFileError("could not read config file")
+        raise errors.ConfigFileError("could not read config file")
     return config
 
 
