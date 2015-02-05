@@ -21,9 +21,10 @@ class MySQLDb(Db):
         super(MySQLDb, cls).new(config)
 
         if 'revision_db_name' in cls.config and 'history_table_name' in cls.config:
+            cls.db_name = '`%s`' % cls.config['revision_db_name']
+            cls.history_table_name = cls.config['history_table_name']
             cls.full_table_name = '`%s`.`%s`' % (cls.config['revision_db_name'],
                                                  cls.config['history_table_name'])
-            cls.db_name = '`%s`' % cls.config['revision_db_name']
         else:
             raise DbError('No history schema found in config file. Please add values for the '
                           'following keys: revision_db_name, history_table_name\n')
@@ -113,9 +114,10 @@ class MySQLDb(Db):
         return cls.execute("""CREATE TABLE IF NOT EXISTS %s (
         `id` int(11) unsigned not null primary key auto_increment,
         `alter_hash` varchar(100) not null,
-        `ran_on` timestamp not null
+        `ran_on` timestamp not null,
+        constraint uq_%s__alter_hash unique (`alter_hash`)
         ) engine=InnoDB
-        """ % cls.full_table_name)
+        """ % (cls.full_table_name, cls.history_table_name))
 
     @classmethod
     def conn(cls):
