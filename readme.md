@@ -1,5 +1,7 @@
 # Schema Tool
 
+![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)
+
 Schema Tool helps manage database alter history in a framework-agnostic
 way that works well for both large and small teams. The tool uses the concept of a linear
 alter chain to track the order in which alters should be (or have been) applied.  It does so
