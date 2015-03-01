@@ -3,6 +3,7 @@ import re
 
 class Constants(object):
     ALTER_DIR = os.path.abspath(os.path.curdir) + os.path.sep
+    BASE_CONFIG_FILE = os.path.join(os.path.expanduser("~"), '.schema-tool')
     CONFIG_FILE = os.path.join(ALTER_DIR, 'config.json')
     COMMANDS = [
         {'command': 'new',      'handler': 'NewCommand'},

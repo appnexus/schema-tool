@@ -9,12 +9,14 @@
 
 
 import inspect
+import os
 import sys
 
 (v_major, v_minor, _, _, _) = sys.version_info
 if v_major != 2 or (v_major == 2 and v_minor != 7):
     sys.stderr.write("Warning: Tool only tested against 2.7. Results may vary" +
                      " with older versions.\n\n")
+
 if v_major == 2 and v_minor < 6:
     import simplejson as json
 else:
@@ -34,8 +36,6 @@ def main():
     handler. If the command is unknown or the '-h' or '-v' flag has been given,
     display help-file or version-info, respectively.
     """
-    config = load_config()
-
     commands = [
         "  new         Create a new alter",
         "  check       Check that all back-refs constitute a valid chain",
@@ -64,6 +64,15 @@ def main():
     if sys.argv[1] in ['-h', '--help', 'help']:
         parser.print_help()
         sys.exit(0)
+
+    # load and validate config
+    config = load_config()
+    config_errors = CommandContext.validate_config(config)
+    if not len(config_errors) == 0:
+        sys.stderr.write("Error: Configigurations are not valid:\n")
+        for error in config_errors:
+            sys.stderr.write("\t%s\n" % error)
+        sys.exit(1)
 
     # check if the command given is valid and dispatch appropriately
     user_command = sys.argv[1]
@@ -102,17 +111,34 @@ def main():
 
 def load_config():
     """
-    Read the config file and return the values
+    Read the config file(s) and return the values. If a base-config file is
+    found first, then it attempted to be loaded and merged with the config file
+    in the project repo.
     """
+    base_config = _load_config(Constants.BASE_CONFIG_FILE)
+    override_config = _load_config(Constants.CONFIG_FILE)
+
+    base_config.update(override_config)
+    return base_config
+
+def _load_config(file_name):
+    """
+    Given a file name for a config, attempt to load and parse it as JSON. If the file
+    is not found, then an empty dict will be returned.
+    """
+    if not os.path.isfile(file_name):
+        return {}
+
     try:
-        config_file = open(Constants.CONFIG_FILE, 'r')
+        config_file = open(file_name, 'r')
         try:
             config = json.load(config_file)
         except ValueError, ex:
-            raise errors.ConfigFileError("could not parse config file: %s\n" % ex.message)
+            raise errors.ConfigFileError("Could not parse config file '%s': %s\n" % (
+                file_name, ex.message))
     except IOError, ex:
         sys.stderr.write("Error reading config: %s\n" % ex.strerror)
-        sys.stderr.write("Tried reading: %s\n" % Constants.CONFIG_FILE)
+        sys.stderr.write("Tried reading: %s\n" % file_name)
         raise errors.ConfigFileError("could not read config file")
     return config
 
