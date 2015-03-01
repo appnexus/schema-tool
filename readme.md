@@ -1,6 +1,6 @@
 # Schema Tool
 
-![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)
+[![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
 
 Schema Tool helps manage database alter history in a framework-agnostic
 way that works well for both large and small teams. The tool uses the concept of a linear

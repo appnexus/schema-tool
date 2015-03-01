@@ -7,4 +7,4 @@ notifications:
   email:
     - jmurray@appnexus.com
   on_success: change
-  on_failure: alway
+  on_failure: always
