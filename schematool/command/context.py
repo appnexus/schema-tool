@@ -34,6 +34,28 @@ class CommandContext:
 
         return CommandContext(config, db)
 
+    @staticmethod
+    def validate_config(config):
+        """
+        Given a config, check for the required fields. Return the array
+        of errors that are encountered. A valid configuration should return
+        an empty array.
+        """
+        errors = []
+        if not 'type' in config:
+            errors.append("Missing config value 'type'")
+        if not 'host' in config:
+            errors.append("Missing config value 'host'")
+        if not 'revision_db_name' in config:
+            errors.append("Missing config value 'revision_db_name'")
+        if not 'history_table_name' in config:
+            errors.append("Missing config value 'history_table_name'")
+
+        if 'password' in config and not 'username' in config:
+            errors.append("'username' missing when 'password' provided")
+
+        return errors
+
     def __init__(self, config, DB):
         self.config = config
         self.db = DB
