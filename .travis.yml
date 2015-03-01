@@ -1,0 +1,11 @@
+language: python
+python:
+  - 2.7
+  - 3.2
+script: 
+  - "cd ./test && ./run.sh"
+notifications:
+  email:
+    - jmurray@appnexus.com
+  on_success: change
+  on_failure: alway
