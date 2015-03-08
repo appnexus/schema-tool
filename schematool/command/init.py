@@ -53,6 +53,6 @@ class InitCommand(Command):
         """
         Initialize everything if this is the first time that the tool has been run
         """
-        (options, args) = self.parser.parse_args()
+        (options, _) = self.parser.parse_args()
         self.db.init(force=options.force)
         self._setup_pre_commit_hook()

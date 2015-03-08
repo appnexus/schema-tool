@@ -31,7 +31,7 @@ class NewCommand(Command):
 
         Return the node ID of the created files, which is used for testing.
         """
-        (options, args) = self.parser.parse_args()
+        (options, _) = self.parser.parse_args()
 
         timestamp = str(round(time() * 10)).replace('.', '')
         filename = timestamp + '-' + (options.filename or '_').replace('.sql', '')

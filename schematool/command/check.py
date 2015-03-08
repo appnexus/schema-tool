@@ -28,7 +28,8 @@ class CheckCommand(Command):
         # TODO  Add flags to only perform certain checks (as described in the other todos)
 
         if not inline:
-            (_, args) = self.parser.parse_args()
+          # (options, args) = self.parser.parse_args()
+          self.parse_args()
 
         self.files = ChainUtil.get_alter_files()
 

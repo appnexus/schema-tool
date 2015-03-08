@@ -64,7 +64,7 @@ class UpCommand(Command):
 
         # find (and remove) synced alters from alter_list (so they are not run again)
         common_history = 0
-        for (_, alter_id, datetime) in history:
+        for (_, alter_id, _) in history:
             if len(alter_list) == 0:
                 break
             # don't count alters for other env's in common-history
@@ -84,10 +84,10 @@ class UpCommand(Command):
             if len(uncommon_history) > 0:
                 # clean up alters from here
                 uncommon_history.reverse()
-                for (_, alter_id, datetime) in uncommon_history:
+                for (_, alter_id, _) in uncommon_history:
                     alters = [a for a in alter_list if a.id == alter_id]
                     if len(alters) > 1:
-                        msg = "Multiple alters found for a single id (%s)" % a.id
+                        msg = "Multiple alters found for a single id (%s)" % alter_id
                         if not options.force:
                             raise MultipleDownAltersError(msg)
                         else:

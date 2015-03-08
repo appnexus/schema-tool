@@ -116,7 +116,7 @@ class ChainUtil(object):
                 heads.append(node)
 
         # check backref catalog for duplicates
-        for (backref_id, _nodes) in backrefs.iteritems():
+        for (_, _nodes) in backrefs.iteritems():
             if len(_nodes) > 1:
                 msg = []
                 msg.append("Divergent Branch:"

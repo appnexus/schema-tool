@@ -54,7 +54,7 @@ class ResolveCommand(Command):
             given the force option, can undo the commit before resolving (should issue
             message about what has happened).
         """
-        (options, args) = self.parser.parse_args()
+        (_, args) = self.parser.parse_args()
 
         if len(args) == 0:
             raise ArgsError("You must provide a filename or reference", self.parser.format_help())
@@ -314,7 +314,7 @@ class ResolveCommand(Command):
         try:
             for cmd in commands:
                 proc = subprocess.Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-                stdout, stderr = proc.communicate()
+                _, stderr = proc.communicate()
 
                 if not proc.returncode == 0 and stderr is not None:
                     sys.stderr.write("Error")
