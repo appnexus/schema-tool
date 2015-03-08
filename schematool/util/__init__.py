@@ -6,5 +6,5 @@
 #    from util.chain_util import ChainUtil
 
 
-from chain import *
-from metadata import *
+from chain import ChainUtil
+from metadata import MetaDataUtil
