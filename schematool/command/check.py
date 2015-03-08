@@ -29,7 +29,7 @@ class CheckCommand(Command):
 
         if not inline:
           # (options, args) = self.parser.parse_args()
-          self.parse_args()
+          self.parser.parse_args()
 
         self.files = ChainUtil.get_alter_files()
 
