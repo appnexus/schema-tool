@@ -27,6 +27,7 @@ from traceback import print_exc
 
 # local imports
 from command import *
+from constants import Constants
 import errors
 
 
