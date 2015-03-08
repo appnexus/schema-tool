@@ -3,9 +3,9 @@ import re
 import sys
 
 # local imports
-from constants import *
+from constants import Constants
 
-class SimpleNode:
+class SimpleNode(object):
     """
     Represents a simple node within the alter chain. Just makes things
     a little easier and what not.
