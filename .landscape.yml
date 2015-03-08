@@ -1,2 +1,5 @@
 ignore-paths:
   - schematool/mysql
+  - schematool/command/__init__.py
+  - schematool/db/__init__.py
+  - schematool/util/__init__.py
