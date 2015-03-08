@@ -28,7 +28,7 @@ class CheckCommand(Command):
         # TODO  Add flags to only perform certain checks (as described in the other todos)
 
         if not inline:
-            (options, args) = self.parser.parse_args()
+            (_, args) = self.parser.parse_args()
 
         self.files = ChainUtil.get_alter_files()
 
@@ -53,11 +53,11 @@ class CheckCommand(Command):
             tail = tail.backref
 
         up_alter = re.compile('-up.sql')
-        for file in self.files:
-            if up_alter.search(file) is not None:
-                if file not in chain_files:
+        for alter_file in self.files:
+            if up_alter.search(alter_file) is not None:
+                if alter_file not in chain_files:
                     # @jmurray - how can scenario be encountered?
-                    raise MissingRefError("File not found within build-chain '%s'" % file)
+                    raise MissingRefError("File not found within build-chain '%s'" % alter_file)
 
     def check_missing_pair(self):
         """
@@ -65,14 +65,14 @@ class CheckCommand(Command):
         """
         up_alter = re.compile('-up.sql')
         down_alter = re.compile('-down.sql')
-        for file in self.files:
-            if up_alter.search(file) is not None:
-                down_file = up_alter.sub('-down.sql', file)
+        for alter_file in self.files:
+            if up_alter.search(alter_file) is not None:
+                down_file = up_alter.sub('-down.sql', alter_file)
                 if not os.path.exists(os.path.join(Constants.ALTER_DIR, down_file)):
                     raise MissingDownAlterError("no down-file found for '%s', expected '%s'\n" % (
-                        file, down_file))
-            elif down_alter.search(file) is not None:
-                up_file = down_alter.sub('-up.sql', file)
+                        alter_file, down_file))
+            elif down_alter.search(alter_file) is not None:
+                up_file = down_alter.sub('-up.sql', alter_file)
                 if not os.path.exists(os.path.join(Constants.ALTER_DIR, up_file)):
                     raise MissingUpAlterError("no up-file found for '%s', expected '%s'\n" % (
-                        file, up_file))
+                        alter_file, up_file))

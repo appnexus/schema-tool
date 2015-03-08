@@ -61,7 +61,7 @@ class DownCommand(Command):
         down_alters_to_run = []
         max_history_len = int(options.N or len(history))
         i = 0
-        for (id, alter_id, alter_time) in history:
+        for (_, alter_id, alter_time) in history:
             if i == max_history_len:
                 break
             if run_type == 'base':

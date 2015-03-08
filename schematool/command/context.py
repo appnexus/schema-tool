@@ -2,7 +2,7 @@
 from db import MySQLDb, PostgresDb, MemoryDb
 from errors import InvalidDBTypeError
 
-class CommandContext:
+class CommandContext(object):
     """
     Represents everything that a command-class could possibly need to do its
     job. Including (but not limited to):
