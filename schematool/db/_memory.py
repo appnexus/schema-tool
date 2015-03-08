@@ -40,7 +40,7 @@ class MemoryDb(Db):
         cls.data.append([cls.id, ref, None])
 
     @classmethod
-    def get_append_commit_query(cls, ref):
+    def get_append_commit_query(cls, _):
         return "n/a for memory-db"
 
     @classmethod
@@ -51,7 +51,7 @@ class MemoryDb(Db):
         return True
 
     @classmethod
-    def get_remove_commit_query(cls, ref):
+    def get_remove_commit_query(cls, _):
         return "n/a for memory-db"
 
     @classmethod

@@ -27,7 +27,7 @@ class ListCommand(Command):
         """
         # TODO: add a verbose mode, which shows alters as having been run or not
 
-        (options, args) = self.parser.parse_args()
+        (options, _) = self.parser.parse_args()
 
         list_reverse = options.listReverse
 

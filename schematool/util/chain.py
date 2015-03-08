@@ -60,7 +60,7 @@ class ChainUtil(object):
 
             meta_data = MetaDataUtil.parse_meta(head)
 
-            if not 'ref' in meta_data:
+            if 'ref' not in meta_data:
                 continue
 
             node = SimpleNode(filename=f, id=meta_data['ref'])
@@ -92,7 +92,7 @@ class ChainUtil(object):
         # check if we're working with no nodes, return None if so
         # don't error/exit because and empty list is not necessarily invalid
         if len(nodes) == 0:
-          return None
+            return None
 
         heads = []
         backrefs = {}
@@ -116,7 +116,7 @@ class ChainUtil(object):
                 heads.append(node)
 
         # check backref catalog for duplicates
-        for (backref_id, _nodes) in backrefs.iteritems():
+        for (_, _nodes) in backrefs.iteritems():
             if len(_nodes) > 1:
                 msg = []
                 msg.append("Divergent Branch:"

@@ -26,8 +26,16 @@ from optparse import OptionParser
 from traceback import print_exc
 
 # local imports
-from command import *
+from constants import Constants
+from command import CommandContext
 import errors
+
+# Import commands
+# These will not be used directly, but dynamically based on user-input
+# and the mapping in Constants
+from command import (ListCommand, GenSqlCommand, UpCommand, ResolveCommand, 
+                     GenRefCommand, NewCommand, RebuildCommand, Command, 
+                     CheckCommand, InitCommand, DownCommand)
 
 
 def main():

@@ -20,7 +20,7 @@ class RebuildCommand(Command):
         self.parser = parser
 
     def run(self):
-        (options, args) = self.parser.parse_args()
+        (options, _) = self.parser.parse_args()
 
         sys.stdout.write("Bringing all the way down\n")
         sys.argv = [sys.argv[0]]

@@ -36,9 +36,9 @@ class MySQLDb(Db):
     @classmethod
     def init_conn(cls):
         try:
-          mysql
+            mysql
         except NameError:
-          raise DbError('MySQL module not found/loaded. Please make sure all dependencies are installed\n')
+            raise DbError('MySQL module not found/loaded. Please make sure all dependencies are installed\n')
 
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
@@ -53,16 +53,16 @@ class MySQLDb(Db):
         try:
             cursor = cls.cursor
             if data is not None:
-              cursor.execute(query, data)
+                cursor.execute(query, data)
             else:
-              cursor.execute(query)
+                cursor.execute(query)
         except mysql.connector.Error, e:
             raise DbError('Could not query DB. Exception:\n%s\n\nQuery:%s' % (e, query))
 
         try:
-          res = cursor.fetchall()
+            res = cursor.fetchall()
         except mysql.connector.InterfaceError, e:
-          res = None
+            res = None
         cls.conn.commit()
         return res
 
