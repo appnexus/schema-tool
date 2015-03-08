@@ -1,6 +1,7 @@
 # Schema Tool
 
 [![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
+[![Code Health](https://landscape.io/github/appnexus/schema-tool/master/landscape.svg?style=flat)](https://landscape.io/github/appnexus/schema-tool/master)
 
 Schema Tool helps manage database alter history in a framework-agnostic
 way that works well for both large and small teams. The tool uses the concept of a linear
