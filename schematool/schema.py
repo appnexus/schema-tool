@@ -26,7 +26,9 @@ from optparse import OptionParser
 from traceback import print_exc
 
 # local imports
-from command import *
+from command import (ListCommand, GenSqlCommand, UpCommand, ResolveCommand, 
+                     GenRefCommand, NewCommand, RebuildCommand, Command, 
+                     CheckCommand, InitCommand, DownCommand)
 from constants import Constants
 import errors
 
