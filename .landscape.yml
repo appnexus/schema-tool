@@ -1,2 +1,2 @@
-ignore_paths:
+ignore-paths:
   - schematool/mysql
