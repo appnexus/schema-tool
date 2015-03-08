@@ -42,16 +42,16 @@ class CommandContext(object):
         an empty array.
         """
         errors = []
-        if not 'type' in config:
+        if 'type' not in config:
             errors.append("Missing config value 'type'")
-        if not 'host' in config:
+        if 'host' not in config:
             errors.append("Missing config value 'host'")
-        if not 'revision_db_name' in config:
+        if 'revision_db_name' not in config:
             errors.append("Missing config value 'revision_db_name'")
-        if not 'history_table_name' in config:
+        if 'history_table_name' not in config:
             errors.append("Missing config value 'history_table_name'")
 
-        if 'password' in config and not 'username' in config:
+        if 'password' in config and 'username' not in config:
             errors.append("'username' missing when 'password' provided")
 
         return errors
