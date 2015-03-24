@@ -27,7 +27,7 @@ is an excellent DSL already, so there is no need for that.
 
 ## Requirements
 
-+ Python 2.7 (may work with other versions, only tested against 2.7)
++ Python 2.6 or 2.7 (may work with other versions)
 + [`psycopg2`][3] installed if you plan to use with Postgres
 
 ## Getting Started
