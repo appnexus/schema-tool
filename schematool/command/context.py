@@ -1,5 +1,5 @@
 # local imports
-from db import MySQLDb, PostgresDb, MemoryDb
+from db import MySQLDb, PostgresDb, VerticaDb, MemoryDb
 from errors import InvalidDBTypeError
 
 class CommandContext(object):
@@ -24,6 +24,8 @@ class CommandContext(object):
                 db = PostgresDb.new(config)
             elif config['type'] == 'mysql':
                 db = MySQLDb.new(config)
+            elif config['type'] == 'vertica':
+                db = VerticaDb.new(config)
             elif config['type'] == 'memory-db':
                 db = MemoryDb.new(config)
             else:
