@@ -12,6 +12,8 @@ from db import Db
 from errors import DbError
 
 class PostgresDb(Db):
+    DEFAULT_PORT=5432
+
     @classmethod
     def new(cls, config):
         super(PostgresDb, cls).new(config)
@@ -152,6 +154,9 @@ class PostgresDb(Db):
                     elif key == 'db_name':
                         conn_string_parts.append('dbname=%s')
                         conn_string_params.append(value)
+                    elif key == 'port':
+                        conn_string_parts.append('port=%s')
+                        conn_string_params.append(value)
             conn_string = ' '.join(conn_string_parts) % tuple(conn_string_params)
             conn = psycopg2.connect(conn_string)
         except Exception, e:
@@ -163,9 +168,11 @@ class PostgresDb(Db):
 
     @classmethod
     def run_file_cmd(cls):
+        port_number = str(cls.config.get('port', PostgresDb.DEFAULT_PORT))
         cmd = ['psql',
                '-h', cls.config['host'],
                '-U', cls.config['username'],
+               '-p', port_number,
                '-v', 'verbose',
                '-v', 'ON_ERROR_STOP=1',
                '-v', 'schema=%s' % cls.config['schema_name'],
