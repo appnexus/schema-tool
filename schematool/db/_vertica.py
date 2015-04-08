@@ -1,6 +1,6 @@
+# Requires vertica-python driver: https://pypi.python.org/pypi/vertica-python/0.3.0
 # stdlib imports
 import os
-import sys
 
 try:
     # Pitfalls:
