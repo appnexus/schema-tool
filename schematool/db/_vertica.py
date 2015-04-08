@@ -130,7 +130,7 @@ class VerticaDb(Db):
             conf_to_driver_map = {'host':'host',
                                   'username':'user',
                                   'password':'password',
-                                  'db_name':'database',
+                                  'revision_db_name':'database',
                                   'port':'port'}
             for conf_key, conf_value in config.iteritems():
                 try:
