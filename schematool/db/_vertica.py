@@ -1,4 +1,5 @@
-# Requires vertica-python driver: https://pypi.python.org/pypi/vertica-python/0.3.0
+# Requires vertica-python driver: https://pypi.python.org/pypi/vertica-python/
+# which also requires the psycopg2 driver: https://github.com/psycopg/psycopg2
 # stdlib imports
 import os
 

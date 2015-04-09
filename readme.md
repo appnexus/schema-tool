@@ -28,8 +28,8 @@ is an excellent DSL already, so there is no need for that.
 ## Requirements
 
 + Python 2.7 (may work with other versions, only tested against 2.7)
-+ [`psycopg2`][3] installed if you plan to use with Postgres
-+ [`vertica-python`][6] installed if planning to use with Vertica
++ [`psycopg2`][3] if planning to use Schema Tool with Postgres
++ [`vertica-python`][6] and [`psycopg2`][3] (required by Vertica python) if planning to use Schema Tool with Vertica
 
 ## Getting Started
 
@@ -327,5 +327,5 @@ See LICENSE file
   [3]: https://github.com/psycopg/psycopg2
   [4]: https://github.com/blog/1386-closing-issues-via-commit-messages
   [5]: https://github.com/appnexus/schema-tool/graphs/contributors
-  [6]: https://pypi.python.org/pypi/vertica-python/0.3.0
+  [6]: https://pypi.python.org/pypi/vertica-python/
 
