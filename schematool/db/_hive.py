@@ -173,12 +173,19 @@ class HiveDb(Db):
         return connection
 
     @classmethod
-    def run_file_cmd(cls):
+    def run_file_cmd(cls, filename):
+        """
+        return a 3-tuple of strings containing:
+            the command to run (list)
+            environment variables to be passed to command (dictionary or None)
+            data to be piped into stdin (file-like object or None)
+        """
         port = cls.config.get('port', cls.DEFAULT_PORT)
         jdbc_url = 'jdbc:hive2://%s:%s/default;auth=noSasl' % (cls.config['host'], port)
-        # Beeline is the recommended Hive command-line client
+
+        # Beeline is the recommended command-line client for HiveServer2
         cmd = ['beeline', '-u', jdbc_url,
                '-n', cls.config['username'],
-               '-p', cls.config['password']]
-        my_env = None
-        return cmd, my_env
+               '-p', cls.config['password'],
+               '-f', filename]
+        return cmd, None, None

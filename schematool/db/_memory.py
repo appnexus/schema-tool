@@ -63,9 +63,21 @@ class MemoryDb(Db):
         return cls
 
     @classmethod
-    def run_file_cmd(cls):
-        return ['/bin/true'], None
+    def run_file_cmd(cls, filename):
+        """
+        return a 3-tuple of strings containing:
+            the command to run (list)
+            environment variables to be passed to command (dictionary or None)
+            data to be piped into stdin (file-like object or None)
+        """
+        return ['/bin/true'], None, None
 
     @classmethod
-    def run_file_cmd_with_error(cls):
-        return ['/bin/false'], None
+    def run_file_cmd_with_error(cls, filename):
+        """
+        return a 3-tuple of strings containing:
+            the command to run (list)
+            environment variables to be passed to command (dictionary or None)
+            data to be piped into stdin (file-like object or None)
+        """
+        return ['/bin/false'], None, None

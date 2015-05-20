@@ -154,7 +154,13 @@ class MySQLDb(Db):
         return conn
 
     @classmethod
-    def run_file_cmd(cls):
+    def run_file_cmd(cls, filename):
+        """
+        return a 3-tuple of strings containing:
+            the command to run (list)
+            environment variables to be passed to command (dictionary or None)
+            data to be piped into stdin (file-like object or None)
+        """
         cmd = ['mysql',
                '-h', cls.config['host'],
                '-u', cls.config['username']]
@@ -163,4 +169,4 @@ class MySQLDb(Db):
         if cls.config.get('port'):
             cmd.append('-P%s' % cls.config['port'])
         my_env = None
-        return cmd, my_env
+        return cmd, my_env, open(filename)
