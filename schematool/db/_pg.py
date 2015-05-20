@@ -151,7 +151,7 @@ class PostgresDb(Db):
                     elif key == 'password':
                         conn_string_parts.append('password=%s')
                         conn_string_params.append(value)
-                    elif key == 'db_name':
+                    elif key == 'revision_db_name':
                         conn_string_parts.append('dbname=%s')
                         conn_string_params.append(value)
                     elif key == 'port':
