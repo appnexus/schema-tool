@@ -156,7 +156,13 @@ class VerticaDb(Db):
         return conn
 
     @classmethod
-    def run_file_cmd(cls):
+    def run_file_cmd(cls, filename):
+        """
+        return a 3-tuple of strings containing:
+            the command to run (list)
+            environment variables to be passed to command (dictionary or None)
+            data to be piped into stdin (file-like object or None)
+        """
         port_number = str(cls.config.get('port', VerticaDb.DEFAULT_PORT))
         cmd = ['/opt/vertica/bin/vsql',
                '-h', cls.config['host'],
@@ -171,4 +177,4 @@ class VerticaDb(Db):
         if 'password' in cls.config:
             my_env = os.environ.copy()
             my_env['VSQL_PASSWORD'] = cls.config['password']
-        return cmd, my_env
+        return cmd, my_env, open(filename)
