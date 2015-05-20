@@ -160,5 +160,7 @@ class MySQLDb(Db):
                '-u', cls.config['username']]
         if cls.config.get('password'):
             cmd.append('-p%s' % cls.config['password'])
+        if cls.config.get('port'):
+            cmd.append('-P%s' % cls.config['port'])
         my_env = None
         return cmd, my_env
