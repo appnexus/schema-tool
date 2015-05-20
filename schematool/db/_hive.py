@@ -1,6 +1,7 @@
 import os
 import tempfile
 from datetime import datetime
+from time import time
 
 # third-party imports
 try:
@@ -103,11 +104,14 @@ class HiveDb(Db):
 
     @classmethod
     def get_append_commit_query(cls, ref):
+        # Use a monotonically increasing value for the id field, since Hive does not have an
+        # auto-increment mechanism
+        id_value = int(time())
         ran_on = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
-        return ("""INSERT OVERWRITE TABLE %s SELECT t.alter_hash, t.ran_on FROM
-                   (SELECT alter_hash, ran_on FROM %s UNION ALL
-                   SELECT '%s' AS alter_hash, '%s' AS ran_on FROM %s LIMIT 1) t""" %
-            (cls.full_table_name, cls.full_table_name, ref, ran_on, cls.full_table_name))
+        return ("""INSERT INTO TABLE %s
+                   SELECT %s AS id, '%s' AS alter_hash, '%s' AS ran_on FROM %s
+                   WHERE alter_hash = '%s' LIMIT 1""" %
+            (cls.full_table_name, id_value, ref, ran_on, cls.full_table_name, cls.DUMMY_ALTER_REF))
 
     @classmethod
     def remove_commit(cls, ref):
@@ -115,12 +119,13 @@ class HiveDb(Db):
 
     @classmethod
     def get_remove_commit_query(cls, ref):
-        return ("""INSERT OVERWRITE TABLE %s SELECT t.alter_hash, t.ran_on FROM %s t
-                   WHERE t.alter_hash != '%s'""" % (cls.full_table_name, cls.full_table_name, ref))
+        return ("""INSERT OVERWRITE TABLE %s SELECT * FROM %s
+                   WHERE alter_hash != '%s'""" % (cls.full_table_name, cls.full_table_name, ref))
 
     @classmethod
     def create_history(cls):
         create_table_result = cls.execute("""CREATE TABLE IF NOT EXISTS %s (
+                                                id int,
                                                 alter_hash string,
                                                 ran_on timestamp
                                             ) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
@@ -132,19 +137,30 @@ class HiveDb(Db):
 
         if not results:
             # Create a tab-separated file that will be used to seed the history table, and attempt
-            # to load it via Hive
+            # to load it via Hive.
+            #
+            # Note: Due to Hive's limited native support for certain SQL operations, like
+            # 'INSERT INTO ... VALUES', 'UPDATE', and 'DELETE FROM', we must seed this initial
+            # "pivot" row into the history table so that we can simulate standard insert and delete
+            # operations using 'INSERT INTO ... SELECT' syntax. This is a bit roundabout, but seems
+            # to be most compatible with our particular Hive/Hadoop installation.
             init_file_path = os.path.join(tempfile.gettempdir(), cls.HIVE_INIT_FILENAME)
             with open(init_file_path, 'w') as f:
                 ran_on = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
-                f.write('%s\t%s\n' % (cls.DUMMY_ALTER_REF, ran_on))
+                f.write('0\t%s\t%s\n' % (cls.DUMMY_ALTER_REF, ran_on))
             os.chmod(init_file_path, 0666)
 
             try:
                 # Since the file was created on the local filesystem and the Hive client will execute
                 # the following operation such that all local paths are relative to the Hive server's
                 # filesystem, this will only work if the Hive server is running locally.
+                #
                 # Try to load the file anyway - otherwise, warn the user that this step must be done
-                # manually
+                # manually.
+                #
+                # There does not seem to be a better way to bootstrap the history table
+                # without direct access to the host on which the Hive server is running or manipulating
+                # the table via HDFS, which seems outside the scope of this schema tool.
                 cls.execute("LOAD DATA LOCAL INPATH '%s' OVERWRITE INTO TABLE %s" %
                     (init_file_path, cls.full_table_name))
             except DbError, e:
