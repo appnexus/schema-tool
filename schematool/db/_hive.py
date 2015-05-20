@@ -90,6 +90,14 @@ class HiveDb(Db):
             (cls.full_table_name, cls.DUMMY_ALTER_REF))
 
     @classmethod
+    def get_applied_alters(cls):
+        # Omit the placeholder row
+        results = cls.execute('SELECT alter_hash FROM %s WHERE alter_hash != \'%s\'' %
+            (cls.full_table_name, cls.DUMMY_ALTER_REF))
+        alters_hashes = [result[0] for result in results]
+        return alters_hashes
+
+    @classmethod
     def append_commit(cls, ref):
         return cls.execute(cls.get_append_commit_query(ref))
 
@@ -156,7 +164,7 @@ class HiveDb(Db):
         try:
             connection = hive.connect(host=config['host'], port=config.get('port', cls.DEFAULT_PORT),
                                       authMechanism='NOSASL', user=config['username'],
-                                      password=config['password'], database=config['db_name'])
+                                      password=config['password'])
         except Exception, e:
             raise DbError("Cannot connect to Hive Server: %s\n"
                           "Ensure that the server is running and you can connect normally"
@@ -167,9 +175,10 @@ class HiveDb(Db):
     @classmethod
     def run_file_cmd(cls):
         port = cls.config.get('port', cls.DEFAULT_PORT)
-        jdbc_url = 'jdbc:hive2://%s:%s/%s' % (cls.config['host'], port, cls.config['db_name'])
-        # TODO: fix this
-        cmd = ['beeline',
-               '-u', jdbc_url]
+        jdbc_url = 'jdbc:hive2://%s:%s/default;auth=noSasl' % (cls.config['host'], port)
+        # Beeline is the recommended Hive command-line client
+        cmd = ['beeline', '-u', jdbc_url,
+               '-n', cls.config['username'],
+               '-p', cls.config['password']]
         my_env = None
         return cmd, my_env
