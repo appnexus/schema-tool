@@ -12,7 +12,7 @@ and disallowing a merge.)  The features of the tool aim to allow developers to
 write alter code in their respective branches, easily and safely merge that
 code into the main alter chain, and finally run those alters on target databases (dev, QA, production, etc).
 
-Currently the tool supports MySQL and Postgres.
+Currently the tool supports MySQL, Postgres, and Vertica.
 
 The key features of the tool are:
 
@@ -28,7 +28,8 @@ is an excellent DSL already, so there is no need for that.
 ## Requirements
 
 + Python 2.7 (may work with other versions, only tested against 2.7)
-+ [`psycopg2`][3] installed if you plan to use with Postgres
++ [`psycopg2`][3] if planning to use Schema Tool with Postgres
++ [`vertica-python`][6] and [`psycopg2`][3] (required by Vertica python) if planning to use Schema Tool with Vertica
 
 ## Getting Started
 
@@ -58,6 +59,8 @@ git init
 cp ~/bin/schema-tool/conf/config.json.mysql-template config.json
 # or, for Postgres
 cp ~/bin/schema-tool/conf/config.json.pgsql-template config.json
+# or, for Vertica
+cp ~/bin/schema-tool/conf/config.json.vertica-template config.json
 
 # edit appropriately
 vim config.json
@@ -324,3 +327,5 @@ See LICENSE file
   [3]: https://github.com/psycopg/psycopg2
   [4]: https://github.com/blog/1386-closing-issues-via-commit-messages
   [5]: https://github.com/appnexus/schema-tool/graphs/contributors
+  [6]: https://pypi.python.org/pypi/vertica-python/
+
