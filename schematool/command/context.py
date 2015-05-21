@@ -1,5 +1,5 @@
 # local imports
-from db import MySQLDb, PostgresDb, VerticaDb, MemoryDb
+from db import MySQLDb, PostgresDb, MemoryDb, VerticaDb, HiveDb
 from errors import InvalidDBTypeError
 
 class CommandContext(object):
@@ -28,9 +28,11 @@ class CommandContext(object):
                 db = VerticaDb.new(config)
             elif config['type'] == 'memory-db':
                 db = MemoryDb.new(config)
+            elif config['type'] == 'hive':
+                db = HiveDb.new(config)
             else:
                 raise InvalidDBTypeError("Invalid database type in config. Only "
-                                         "'postgres' and 'mysql' are allowed.")
+                                         "'postgres', 'mysql', 'vertica', and 'hive' are allowed.")
         else:
             db = MySQLDb.new(config)
 

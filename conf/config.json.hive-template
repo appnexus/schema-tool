@@ -1,0 +1,12 @@
+{
+    "username": "test",
+    "password": "test",
+    "host": "localhost",
+    "revision_db_name": "revision",
+    "history_table_name": "history",
+	"port": 10000,
+    "type": "hive",
+    "db_name": "myhivedb",
+    "pre_commit_hook": "relative/path/to-pre-commit-hook.sh",
+    "static_alter_dir": "relative/path/to-static-alters/"
+}

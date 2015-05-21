@@ -64,17 +64,26 @@ class Db(object):
     def _run_file(cls, filename, exit_on_error=True, verbose=False):
         # Used for testing to simulate an error in the running of an alter file
         if getattr(cls, 'auto_throw_error', False) and 'error' in filename:
-            command, my_env = cls.run_file_cmd_with_error()
+            command, my_env, stdin_stream = cls.run_file_cmd_with_error(filename)
         else:
-            command, my_env = cls.run_file_cmd()
-        proc = subprocess.Popen(command,
-                                stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=my_env)
+            command, my_env, stdin_stream = cls.run_file_cmd(filename)
 
-        script = open(filename)
-        out, err = proc.communicate(script.read())
+        if stdin_stream:
+            proc = subprocess.Popen(command,
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    env=my_env)
+
+            script = open(filename)
+            out, err = proc.communicate(script.read())
+        else:
+            proc = subprocess.Popen(command,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    env=my_env)
+            out, err = proc.communicate()
+
         if err:
             sys.stderr.write("\n----------------------\n")
             sys.stderr.write(out.rstrip())

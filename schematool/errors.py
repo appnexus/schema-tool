@@ -42,3 +42,6 @@ class HeadError(Exception):
 
 class CircularRefError(Exception):
     pass
+
+class InitError(Exception):
+    pass
