@@ -19,7 +19,7 @@ setup(
     author_email='engineering@appnexus.com',
     url='http://appnexus.com',
     description='A schema tool to manage alters and migrations.',
-    version='0.2.18',
+    version='0.3.0',
     packages=find_packages(),
     entry_points = {
         'console_scripts': ['schema=schematool.schema:main'],

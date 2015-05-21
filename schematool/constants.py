@@ -20,4 +20,4 @@ class Constants(object):
     FILENAME_STANDARD = re.compile('^\d{12}-.+-(up|down)\.sql$')
     ENV_NAME_STANDARD = re.compile('^([a-zA-Z0-9_-]+)$')
     ISSUE_URL = "http://github.com/appnexus/schema-tool/issues"
-    VERSION = "0.2.18"
+    VERSION = "0.3.0"
