@@ -62,6 +62,8 @@ cp ~/bin/schema-tool/conf/config.json.mysql-template config.json
 cp ~/bin/schema-tool/conf/config.json.pgsql-template config.json
 # or, for Vertica
 cp ~/bin/schema-tool/conf/config.json.vertica-template config.json
+# or, for Hive
+cp ~/bin/schema-tool/conf/config.json.hive-template config.json
 
 # edit appropriately
 vim config.json
@@ -72,20 +74,26 @@ Here is the content of the MySQL config file template:
 
 ```json
 {
-    "username": "root",
-    "password": "root",
-    "host": "localhost",
-    "revision_db_name": "revision",
-    "history_table_name": "history",
-    "port": 3306,
-    "type": "mysql"
+    "type"               : "mysql",
+
+    "username"           : "root",
+    "password"           : "root",
+    "host"               : "localhost",
+    "port"               : 3306,
+
+    "revision_db_name"   : "revision",
+    "history_table_name" : "history",
+
+    "pre_commit_hook"    : "relative/path/to-pre-commit-hook.sh",
+    "static_alter_dir"   : "relative/path/to-static-alters/"
 }
 ```
 
 
 It should be pretty self-explanatory except for the revision database and the history table. These fields specify
 where the tool will keep track of what alters have been run. You can set these values to whatever
-names you would like - the tool takes care of creating the database and table.
+names you would like - the tool takes care of creating the database and table. For more information on configuring
+the tool, see the __Configuration__ section below.
 
 Once your configuration file is correct, you are ready to take a tour of the tool and create your first
 alter. You can find all the commands supported by the tool by reading the help-file, which
@@ -157,6 +165,36 @@ and apply them against your local database by running `schema up`.
 
 Now you're up and running! You can add more files with `schema new` and control the state of your
 database with `up`, `down`, and `rebuild` commands.
+
+
+## Configuration
+
+Configuration for the schema tool usually exists in a file named `config.json` that is located
+within the current working directory, also the directory containing the alter files. However,
+the tool will also load a _base_ config from `~/.schema-tool`. This file will serve as the _defaults_
+for any configurations not specified in the local `config.json`. If, for example, you work solely
+MySQL then your user/pass and host/port settings can be stored in this file.
+
+Since the bulk of the config options focus around connecting to the various, supported databases;
+not all config values apply for each type of database being used. The following chart attempts
+to define each option based on the database type being used.
+
+Value | Type | DB | Description
+-------------------------------
+`type` | string | * | Defines the DB type to be used. Possible values: __mysql__, __hive__, __postgres__, __vertica__
+`username` | string | * | Defines the username to use when connecting to the DB.
+`password` | string | * | Defines the password to use when connecting to the DB.
+`host` | string | * | Defines host of DB to connect to. No default provided.
+`port` | int | * | Defines the port of the DB host to connect to. Specific DB support _may_ provide default.
+`db_name` | string | __postgres__, __vertica__ | Determines specific DB to connect to when running alters.
+`schema_name` | string | __postgres__, __vertica__ | Determines specific schema to connect to when running alters.
+`revision_db_name` | string | * | Name of DB to store history information in (for applied alters). __Note__: For Postgres and Vertica, if the DB does not already exist, it will error. Unlike Hive or MySQL, the DB will _not_ be automatically created for you. The _schema_ however will be as defined in __revision_schema_name__.
+`revision_schema_name` | string | __postgres__, __vertica__ | Defines the schema name that the history table will live in.
+`history_table_name` | string | * | Name of table to store history information in (for applied alters).
+`pre_commit_hook` | string | * | Path to script to use as a pre-commit hook. Will be installed when `init` is run.
+`static_alter_dir` | string | * | Path to output "static alter files" when using the `gen-sql` command.
+
+
 
 ## Understanding The Alter Chain
 

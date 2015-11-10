@@ -1,14 +1,17 @@
 {
-    "type": "vertica",
-    "host": "localhost",
-    "port": 5433,
-    "username": "dbadmin",
-    "password": "password",
-    "db_name": "vertica",
-    "schema_name": "public",
-    "revision_db_name": "vertica",
-    "revision_schema_name": "public",
-    "history_table_name": "schema_history",
-    "pre_commit_hook": "relative/path/to-pre-commit-hook.sh",
-    "static_alter_dir": "relative/path/to-static-alters/"
+    "type"                 : "vertica",
+
+    "username"             : "dbadmin",
+    "password"             : "password",
+    "host"                 : "localhost",
+    "port"                 : 5433,
+    "db_name"              : "vertica",
+    "schema_name"          : "public",
+
+    "revision_db_name"     : "vertica",
+    "revision_schema_name" : "public",
+    "history_table_name"   : "schema_history",
+
+    "pre_commit_hook"      : "relative/path/to-pre-commit-hook.sh",
+    "static_alter_dir"     : "relative/path/to-static-alters/"
 }
