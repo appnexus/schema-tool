@@ -1,5 +1,8 @@
 # Schema Tool
 
+[![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
+[![Code Health](https://landscape.io/github/appnexus/schema-tool/master/landscape.svg?style=flat)](https://landscape.io/github/appnexus/schema-tool/master)
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
@@ -17,9 +20,6 @@
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-[![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
-[![Code Health](https://landscape.io/github/appnexus/schema-tool/master/landscape.svg?style=flat)](https://landscape.io/github/appnexus/schema-tool/master)
 
 Schema Tool helps manage database alter history in a framework-agnostic
 way that works well for both large and small teams. The tool uses the concept of a linear
