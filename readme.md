@@ -1,3 +1,22 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Schema Tool](#schema-tool)
+  - [Requirements](#requirements)
+  - [Getting Started](#getting-started)
+  - [Configuration](#configuration)
+  - [Understanding The Alter Chain](#understanding-the-alter-chain)
+  - [Running Alters (up / down / rebuild)](#running-alters-up--down--rebuild)
+  - [Checking and Resolving the Alter Chain](#checking-and-resolving-the-alter-chain)
+  - [DBA Alter Generation](#dba-alter-generation)
+  - [Recommended Workflow](#recommended-workflow)
+  - [Reporting Issues / Feature Requests](#reporting-issues--feature-requests)
+  - [Contributing](#contributing)
+  - [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Schema Tool
 
 [![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
@@ -93,7 +112,7 @@ Here is the content of the MySQL config file template:
 It should be pretty self-explanatory except for the revision database and the history table. These fields specify
 where the tool will keep track of what alters have been run. You can set these values to whatever
 names you would like - the tool takes care of creating the database and table. For more information on configuring
-the tool, see the __Configuration__ section below.
+the tool, see the [Configuration](#configuration) section below.
 
 Once your configuration file is correct, you are ready to take a tour of the tool and create your first
 alter. You can find all the commands supported by the tool by reading the help-file, which
@@ -180,7 +199,7 @@ not all config values apply for each type of database being used. The following 
 to define each option based on the database type being used.
 
 Value | Type | DB | Description
--------------------------------
+------|------|----|------------
 `type` | string | * | Defines the DB type to be used. Possible values: __mysql__, __hive__, __postgres__, __vertica__
 `username` | string | * | Defines the username to use when connecting to the DB.
 `password` | string | * | Defines the password to use when connecting to the DB.
@@ -338,7 +357,7 @@ the rebase-based workflow).
 If you run into an issue that results in a script error (Python stacktrace) then please
 open up a ticket in the GitHub issue tracker. Please include the following information
 
-+ Steps to reproduce issue
++ Steps to reliably reproduce the issue
 + Entire error output including stack trace
 
 We'll work with you to resolve the issue and collect any more information that may be
@@ -351,6 +370,9 @@ and send us a pull request. If you have something specific that you'd like to ad
 open up an issue for discussion. If it is a fix for a bug or everyone agrees that it would be
 a useful feature, then submit your pull request. Make sure that your pull request's commit message
 uses one of the [appropriate identifiers][4] to link the pull request to the issue.
+
+If you are making updates to the documentation, please be sure to run `make` with the project's
+`Makefile` to perform all required pre-processing of the docs.
 
 [Current contributors][5]
 

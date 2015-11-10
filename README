@@ -1,3 +1,22 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Schema Tool](#schema-tool)
+  - [Requirements](#requirements)
+  - [Getting Started](#getting-started)
+  - [Configuration](#configuration)
+  - [Understanding The Alter Chain](#understanding-the-alter-chain)
+  - [Running Alters (up / down / rebuild)](#running-alters-up--down--rebuild)
+  - [Checking and Resolving the Alter Chain](#checking-and-resolving-the-alter-chain)
+  - [DBA Alter Generation](#dba-alter-generation)
+  - [Recommended Workflow](#recommended-workflow)
+  - [Reporting Issues / Feature Requests](#reporting-issues--feature-requests)
+  - [Contributing](#contributing)
+  - [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Schema Tool
 
 [![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
@@ -180,7 +199,7 @@ not all config values apply for each type of database being used. The following 
 to define each option based on the database type being used.
 
 Value | Type | DB | Description
--------------------------------
+------|------|----|------------
 `type` | string | * | Defines the DB type to be used. Possible values: __mysql__, __hive__, __postgres__, __vertica__
 `username` | string | * | Defines the username to use when connecting to the DB.
 `password` | string | * | Defines the password to use when connecting to the DB.
