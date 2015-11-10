@@ -112,7 +112,7 @@ Here is the content of the MySQL config file template:
 It should be pretty self-explanatory except for the revision database and the history table. These fields specify
 where the tool will keep track of what alters have been run. You can set these values to whatever
 names you would like - the tool takes care of creating the database and table. For more information on configuring
-the tool, see the __Configuration__ section below.
+the tool, see the [Configuration](#configuration) section below.
 
 Once your configuration file is correct, you are ready to take a tour of the tool and create your first
 alter. You can find all the commands supported by the tool by reading the help-file, which
@@ -357,7 +357,7 @@ the rebase-based workflow).
 If you run into an issue that results in a script error (Python stacktrace) then please
 open up a ticket in the GitHub issue tracker. Please include the following information
 
-+ Steps to reproduce issue
++ Steps to reliably reproduce the issue
 + Entire error output including stack trace
 
 We'll work with you to resolve the issue and collect any more information that may be
@@ -370,6 +370,10 @@ and send us a pull request. If you have something specific that you'd like to ad
 open up an issue for discussion. If it is a fix for a bug or everyone agrees that it would be
 a useful feature, then submit your pull request. Make sure that your pull request's commit message
 uses one of the [appropriate identifiers][4] to link the pull request to the issue.
+
+If you are making updates to the documentation, please be sure to run `make` with the project's
+`Makefile` to perform all required pre-processing of the docs. You can run `make setup` to install
+any required pre-processors.
 
 [Current contributors][5]
 

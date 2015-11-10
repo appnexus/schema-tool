@@ -372,7 +372,8 @@ a useful feature, then submit your pull request. Make sure that your pull reques
 uses one of the [appropriate identifiers][4] to link the pull request to the issue.
 
 If you are making updates to the documentation, please be sure to run `make` with the project's
-`Makefile` to perform all required pre-processing of the docs.
+`Makefile` to perform all required pre-processing of the docs. You can run `make setup` to install
+any required pre-processors.
 
 [Current contributors][5]
 
