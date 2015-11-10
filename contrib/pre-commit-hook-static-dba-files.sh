@@ -34,13 +34,14 @@ exit_if_err() {
 # save the current working directory to a variable so that Git operations can
 # be performed.
 
-ORIG_DIR=$(pwd)
-HOOK_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-cd $HOOK_DIR
+HOOK_DIR="$( cd "$(dirname "$0")" ; pwd -P  )"
+ORIG_DIR="$HOOK_DIR/../.."
+cd $ORIG_DIR
 
 STAGED_FILES=$(cd $ORIG_DIR && git diff --cached --name-only --relative --diff-filter=ACMR)
 
 STATIC_ALTER_DIR=$(/usr/bin/env python2.7 -c "import json; print json.loads(open('config.json').read())['static_alter_dir']")
+
 if [[ $? -ne 0 ]]
 then
   echoerr 'No static_alter_dir property found in config.json, but is required.'
@@ -74,6 +75,7 @@ do
     continue
   fi
 
+
   SEEN+=($NODE)
 
   UP_RESULT=$(schema gen-sql -q -w $NODE)
@@ -83,10 +85,10 @@ do
   exit_if_err
 
   # Add the up and down files to git
-  ADD_UP=$(cd $ORIG_DIR && git add "$HOOK_DIR/$UP_RESULT")
+  ADD_UP=$(cd $ORIG_DIR && git add "$UP_RESULT")
   exit_if_err
 
-  ADD_DOWN=$(cd $ORIG_DIR && git add "$HOOK_DIR/$DOWN_RESULT")
+  ADD_DOWN=$(cd $ORIG_DIR && git add "$DOWN_RESULT")
   exit_if_err
 
   echo "Added file to commit (up):   $UP_RESULT"
