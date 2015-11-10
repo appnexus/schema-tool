@@ -1,23 +1,22 @@
+# Schema Tool
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Schema Tool](#schema-tool)
-  - [Requirements](#requirements)
-  - [Getting Started](#getting-started)
-  - [Configuration](#configuration)
-  - [Understanding The Alter Chain](#understanding-the-alter-chain)
-  - [Running Alters (up / down / rebuild)](#running-alters-up--down--rebuild)
-  - [Checking and Resolving the Alter Chain](#checking-and-resolving-the-alter-chain)
-  - [DBA Alter Generation](#dba-alter-generation)
-  - [Recommended Workflow](#recommended-workflow)
-  - [Reporting Issues / Feature Requests](#reporting-issues--feature-requests)
-  - [Contributing](#contributing)
-  - [License](#license)
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [Understanding The Alter Chain](#understanding-the-alter-chain)
+- [Running Alters (up / down / rebuild)](#running-alters-up--down--rebuild)
+- [Checking and Resolving the Alter Chain](#checking-and-resolving-the-alter-chain)
+- [DBA Alter Generation](#dba-alter-generation)
+- [Recommended Workflow](#recommended-workflow)
+- [Reporting Issues / Feature Requests](#reporting-issues--feature-requests)
+- [Contributing](#contributing)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Schema Tool
 
 [![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
 [![Code Health](https://landscape.io/github/appnexus/schema-tool/master/landscape.svg?style=flat)](https://landscape.io/github/appnexus/schema-tool/master)
