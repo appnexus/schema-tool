@@ -1,11 +1,14 @@
 {
-    "username": "root",
-    "password": "root",
-    "host": "localhost",
-    "revision_db_name": "revision",
-    "history_table_name": "history",
-    "port": 3306,
-    "type": "mysql",
-    "pre_commit_hook": "relative/path/to-pre-commit-hook.sh",
-    "static_alter_dir": "relative/path/to-static-alters/"
+    "type"               : "mysql",
+
+    "username"           : "root",
+    "password"           : "root",
+    "host"               : "localhost",
+    "port"               : 3306,
+
+    "revision_db_name"   : "revision",
+    "history_table_name" : "history",
+
+    "pre_commit_hook"    : "relative/path/to-pre-commit-hook.sh",
+    "static_alter_dir"   : "relative/path/to-static-alters/"
 }
