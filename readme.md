@@ -12,6 +12,7 @@
 - [Configuration](#configuration)
 - [Understanding The Alter Chain](#understanding-the-alter-chain)
 - [Running Alters (up / down / rebuild)](#running-alters-up--down--rebuild)
+- [Running Environment Specific Alters](#running-environment-specific-alters)
 - [Checking and Resolving the Alter Chain](#checking-and-resolving-the-alter-chain)
 - [DBA Alter Generation](#dba-alter-generation)
 - [Recommended Workflow](#recommended-workflow)

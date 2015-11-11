@@ -12,6 +12,7 @@
 - [Configuration](#configuration)
 - [Understanding The Alter Chain](#understanding-the-alter-chain)
 - [Running Alters (up / down / rebuild)](#running-alters-up--down--rebuild)
+- [Running Environment Specific Alters](#running-environment-specific-alters)
 - [Checking and Resolving the Alter Chain](#checking-and-resolving-the-alter-chain)
 - [DBA Alter Generation](#dba-alter-generation)
 - [Recommended Workflow](#recommended-workflow)
@@ -276,6 +277,45 @@ be aware of that each command supports:
 You may run into errors when switching branches often because the tool will get confused on
 what may or may not have ran against your database. Most of the time you can get around this by
 running `schema rebuild -fv`.
+
+## Running Environment Specific Alters
+
+When working on large software systems, it is common to run it in multiple environments
+(prod, staging, sand, test / eq, dev, etc). It happens occasionally that you need to craft
+an alter to only run on a subset of all environment or all but a few environment. To help
+with this dilemma, you can add an additional bit of meta-data to your alters to specify the
+environments it should or should not be run in.
+
+To specify where the alter _should_ run, you can add the following bit of meta-data to the
+top of your alter
+
+```sql
+-- require-env: dev, test
+```
+
+This implies that the alter will _only_ be run in `dev` or `test` environment. Similarly, we
+could specify that the alter should _not_ be run in production, which could be defined as
+
+```sql
+-- skip-env: prod
+```
+
+It is important to note that since `require-env` works as a whitelist and `skip-env` works as
+a blacklist, that only one config-value can be used at a time within a single alter. Since the DB
+state is used to run the 'down' alters, this is only required in the 'up' alter.
+
+To specify which environment you are currently running with, simply edit your `config.json` to
+indicate with the `env` key. 
+
+```json
+{
+  "env": "dev"
+}
+```
+
+For your local development setup, this is usually a good candidate to put into your global config
+file `~/.schema-tool`. See [Configuration](#configuration) for more information about the global
+config file.
 
 ## Checking and Resolving the Alter Chain
 
