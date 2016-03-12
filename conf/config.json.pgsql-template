@@ -1,11 +1,15 @@
 {
-    "username": "root",
-    "host": "localhost",
-    "db_name": "tendril",
-    "schema_name": "tendril",
-    "revision_schema_name": "tendril",
-    "history_table_name": "history",
-    "type": "postgres",
-    "pre_commit_hook": "relative/path/to-pre-commit-hook.sh",
-    "static_alter_dir": "relative/path/to-static-alters/"
+    "type"                 : "postgres",
+
+    "username"             : "root",
+    "host"                 : "localhost",
+    "db_name"              : "postgres",
+    "schema_name"          : "my_schema",
+
+    "revision_db_name"     : "postgres",
+    "revision_schema_name" : "my_schema",
+    "history_table_name"   : "history",
+
+    "pre_commit_hook"      : "relative/path/to-pre-commit-hook.sh",
+    "static_alter_dir"     : "relative/path/to-static-alters/"
 }
