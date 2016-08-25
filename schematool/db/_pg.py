@@ -32,7 +32,7 @@ class PostgresDb(Db):
         try:
             psycopg2
         except NameError:
-            raise DbError('Postgres module not found/loaded. Please make sure all dependencies are installed\n')
+            raise DbError('Postgres module not found/loaded. Please make sure psycopg2 is installed\n')
 
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
