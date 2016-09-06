@@ -46,7 +46,11 @@ class PostgresDb(Db):
             cls.init_conn()
         try:
             cursor = cls.cursor
-            cursor.execute('SET search_path TO %s' % cls.config['schema_name'])
+            try:
+                cursor.execute('SET search_path TO %s' % cls.config['schema_name'])
+            except:
+                # this sometimes works, sometimes doesn't ¯\_(ツ)_/¯ 
+                pass
             if data:
                 cursor.execute(query, data)
             else:
