@@ -198,6 +198,10 @@ Since the bulk of the config options focus around connecting to the various, sup
 not all config values apply for each type of database being used. The following chart attempts
 to define each option based on the database type being used.
 
+**Note:** If `db_name` is set, schema tool will attempt to connect to the DB listed on `init`.
+Therefore it is best practice to create that DB before initializing schema tool or running your alters.
+You should not create or destroy that DB as part of your alter chain.
+
 Value | Type | DB | Description
 ------|------|----|------------
 `type` | string | * | Defines the DB type to be used. Possible values: __mysql__, __hive__, __postgres__, __vertica__
