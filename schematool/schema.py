@@ -77,7 +77,7 @@ def main():
     config = load_config()
     config_errors = CommandContext.validate_config(config)
     if not len(config_errors) == 0:
-        sys.stderr.write("Error: Configigurations are not valid:\n")
+        sys.stderr.write("Error: Configurations are not valid:\n")
         for error in config_errors:
             sys.stderr.write("\t%s\n" % error)
         sys.exit(1)
