@@ -1,9 +1,13 @@
+# Requires vertica-python driver: https://pypi.python.org/pypi/vertica-python/
+# which also requires the psycopg2 driver: https://github.com/psycopg/psycopg2
 # stdlib imports
 import os
 
 try:
-    import psycopg2
-    import psycopg2.extras
+    # Pitfalls:
+    # 1 - Returns are in lists, not tuples
+    # 2 - Parameters are to be tuples, not lists
+    import vertica_python
 except ImportError:
     pass
 
@@ -11,12 +15,12 @@ except ImportError:
 from db import Db
 from errors import DbError
 
-class PostgresDb(Db):
-    DEFAULT_PORT=5432
+class VerticaDb(Db):
+    DEFAULT_PORT=5433
 
     @classmethod
     def new(cls, config):
-        super(PostgresDb, cls).new(config)
+        super(VerticaDb, cls).new(config)
         if 'revision_schema_name' in cls.config:
             cls.history_table_name = cls.config['history_table_name']
             cls.full_table_name = '"%s"."%s"' % (cls.config['revision_schema_name'],
@@ -30,9 +34,9 @@ class PostgresDb(Db):
     @classmethod
     def init_conn(cls):
         try:
-            psycopg2
+            vertica_python
         except NameError:
-            raise DbError('Postgres module not found/loaded. Please make sure psycopg2 is installed\n')
+            raise DbError('Vertica module not found/loaded. Please make sure all dependencies are installed\n')
 
         cls.conn = cls.conn()
         cls.cursor = cls.conn.cursor()
@@ -52,29 +56,16 @@ class PostgresDb(Db):
             else:
                 cursor.execute(query)
             results = []
-            # If rowcount == 0, just return None.
-            #
-            # Note from psycopg2 docs:
-            #
-            # The rowcount attribute specifies the number of rows that the
-            # last execute*() produced (for DQL statements like SELECT) or
-            # affected (for DML statements like UPDATE or INSERT).
-            #
-            # http://initd.org/psycopg/docs/cursor.html
-            #
-            # Thus, it is possible that fetchone/fetchall will fail despite
-            # rowcount being > 0.  That error is caught below and None is
-            # returned.
+
             if cursor.rowcount > 0:
                 try:
                     results = cursor.fetchall()
-                except psycopg2.ProgrammingError, e:
-                    if str(e) != 'no results to fetch':
-                        raise psycopg2.ProgrammingError(e.message)
+                except vertica_python.ProgrammingError, e:
+                    raise vertica_python.ProgrammingError(e.message)
             cls.conn.commit()
             return results
         except Exception, e:
-            raise DbError('Psycopg2 execution error: %s\n. Query: %s - Data: %s\n.'
+            raise DbError('Vertica execution error: %s\n. Query: %s - Data: %s\n.'
                           % (e.message, query, str(data)))
 
     @classmethod
@@ -90,9 +81,9 @@ class PostgresDb(Db):
         #
         # The 'IF NOT EXISTS' flag is still used in case the database is
         # created after the existence check but before the CREATE statement.
-        check = "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = %s)"
-        result = cls.execute(check, [cls.config['revision_schema_name']])
-        if result[0] == (True,):
+        check = "SELECT EXISTS(SELECT 1 FROM v_catalog.SCHEMATA WHERE schema_name = %s)"
+        result = cls.execute(check, (cls.config['revision_schema_name'],))
+        if result[0] == [True]:
             return
         else:
             return cls.execute('CREATE SCHEMA IF NOT EXISTS %s' % cls.config['revision_schema_name'])
@@ -122,7 +113,7 @@ class PostgresDb(Db):
     @classmethod
     def create_history(cls):
         return cls.execute("""CREATE TABLE IF NOT EXISTS %s (
-        id serial NOT NULL,
+        id auto_increment NOT NULL,
         alter_hash VARCHAR(100) NOT NULL,
         ran_on timestamp NOT NULL DEFAULT current_timestamp,
         CONSTRAINT pk_%s__id PRIMARY KEY (id),
@@ -132,35 +123,33 @@ class PostgresDb(Db):
     @classmethod
     def conn(cls):
         """
-        return the postgres connection handle to the configured server
+        return the vertica connection handle to the configured server
         """
         config = cls.config
         try:
-            # conn_string here
-            conn_string_parts = []
-            conn_string_params = []
-            for key, value in config.iteritems():
-                # Build connection string based on what is defined in the config
-                if value:
-                    if key == 'host':
-                        conn_string_parts.append('host=%s')
-                        conn_string_params.append(value)
-                    elif key == 'username':
-                        conn_string_parts.append('user=%s')
-                        conn_string_params.append(value)
-                    elif key == 'password':
-                        conn_string_parts.append('password=%s')
-                        conn_string_params.append(value)
-                    elif key == 'revision_db_name':
-                        conn_string_parts.append('dbname=%s')
-                        conn_string_params.append(value)
-                    elif key == 'port':
-                        conn_string_parts.append('port=%s')
-                        conn_string_params.append(value)
-            conn_string = ' '.join(conn_string_parts) % tuple(conn_string_params)
-            conn = psycopg2.connect(conn_string)
+            conn_driver_dict = {}
+            conf_to_driver_map = {'host':'host',
+                                  'username':'user',
+                                  'password':'password',
+                                  'revision_db_name':'database',
+                                  'port':'port'}
+            for conf_key, conf_value in config.iteritems():
+                try:
+                    driver_key = conf_to_driver_map[conf_key]
+                    driver_value = conf_value
+
+                    # NOTE: Vertica Python driver requires non-unicode strings
+                    if isinstance(driver_value, unicode):
+                        driver_value = str(driver_value)
+
+                    conn_driver_dict[driver_key] = driver_value
+
+                except KeyError:
+                    pass
+
+            conn = vertica_python.connect(conn_driver_dict)
         except Exception, e:
-            raise DbError("Cannot connect to Postgres Db: %s\n"
+            raise DbError("Cannot connect to Vertica Db: %s\n"
                           "Ensure that the server is running and you can connect normally"
                           % e.message)
 
@@ -174,17 +163,18 @@ class PostgresDb(Db):
             environment variables to be passed to command (dictionary or None)
             data to be piped into stdin (file-like object or None)
         """
-        port_number = str(cls.config.get('port', PostgresDb.DEFAULT_PORT))
-        cmd = ['psql',
+        port_number = str(cls.config.get('port', VerticaDb.DEFAULT_PORT))
+        cmd = ['/opt/vertica/bin/vsql',
                '-h', cls.config['host'],
                '-U', cls.config['username'],
                '-p', port_number,
-               '-v', 'verbose',
-               '-v', 'ON_ERROR_STOP=1',
+               '-v', 'VERBOSITY=verbose',
+               '-v', 'AUTOCOMMIT=on',
+               '-v', 'ON_ERROR_STOP=on',
                '-v', 'schema=%s' % cls.config['schema_name'],
                cls.config['db_name']]
         my_env = None
         if 'password' in cls.config:
             my_env = os.environ.copy()
-            my_env['PGPASSWORD'] = cls.config['password']
+            my_env['VSQL_PASSWORD'] = cls.config['password']
         return cmd, my_env, open(filename)
