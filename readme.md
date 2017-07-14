@@ -46,7 +46,7 @@ is an excellent DSL already, so there is no need for that.
 
 ## Requirements
 
-+ Python 2.7 (may work with other versions, only tested against 2.7)
++ Python 2.6 or 2.7 (may work with other versions)
 + [`psycopg2`][3] if planning to use Schema Tool with Postgres
 + [`vertica-python`][6] and [`psycopg2`][3] (required by Vertica python) if planning to use Schema Tool with Vertica
 + Hive version `0.11`+ (`beeline` required) and [`pyhs2`][7] if planning to use with Hive
