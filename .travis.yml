@@ -1,11 +1,27 @@
-language: python
-python:
-  - 2.6
-  - 2.7
-script: 
-  - "cd ./test && ./run.sh"
+language: go
+
+go:
+  - 1.8
+  - 1.9
+  - master
+
+matrix:
+  allow_failures:
+    go: master
+    fast_finish: true
+
+script:
+  - "make travis"
+
 notifications:
   email:
     - jmurray@appnexus.com
   on_success: change
   on_failure: always
+
+before_install:
+  - go get -u github.com/golang/lint/golint
+  - go get -u github.com/jstemmer/gotags
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

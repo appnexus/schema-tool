@@ -1,7 +1,16 @@
 # Schema Tool
 
+<!--
 [![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
 [![Code Health](https://landscape.io/github/appnexus/schema-tool/master/landscape.svg?style=flat)](https://landscape.io/github/appnexus/schema-tool/master)
+-->
+
+---
+
+__Note__: This is a rewrite of the [appnexus/schema-tool](https://github.com/appnexus/schema-tool) in Go
+          and is not (yet) intende for production use. Please do not use, it will be ready in time.
+
+---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -9,10 +18,8 @@
 
 - [Requirements](#requirements)
 - [Getting Started](#getting-started)
-- [Configuration](#configuration)
 - [Understanding The Alter Chain](#understanding-the-alter-chain)
 - [Running Alters (up / down / rebuild)](#running-alters-up--down--rebuild)
-- [Running Environment Specific Alters](#running-environment-specific-alters)
 - [Checking and Resolving the Alter Chain](#checking-and-resolving-the-alter-chain)
 - [DBA Alter Generation](#dba-alter-generation)
 - [Recommended Workflow](#recommended-workflow)
@@ -46,10 +53,10 @@ is an excellent DSL already, so there is no need for that.
 
 ## Requirements
 
-+ Python 2.6 or 2.7 (may work with other versions)
++ Python 2.7 (may work with other versions, only tested against 2.7)
 + [`psycopg2`][3] if planning to use Schema Tool with Postgres
 + [`vertica-python`][6] and [`psycopg2`][3] (required by Vertica python) if planning to use Schema Tool with Vertica
-+ Hive version `0.11`+ (`beeline` required) and [`pyhs2`][7] if planning to use with Hive
++ [`pyhs2`][7] if planning to use Schema Tool with Hive
 
 ## Getting Started
 
@@ -81,8 +88,6 @@ cp ~/bin/schema-tool/conf/config.json.mysql-template config.json
 cp ~/bin/schema-tool/conf/config.json.pgsql-template config.json
 # or, for Vertica
 cp ~/bin/schema-tool/conf/config.json.vertica-template config.json
-# or, for Hive
-cp ~/bin/schema-tool/conf/config.json.hive-template config.json
 
 # edit appropriately
 vim config.json
@@ -93,26 +98,20 @@ Here is the content of the MySQL config file template:
 
 ```json
 {
-    "type"               : "mysql",
-
-    "username"           : "root",
-    "password"           : "root",
-    "host"               : "localhost",
-    "port"               : 3306,
-
-    "revision_db_name"   : "revision",
-    "history_table_name" : "history",
-
-    "pre_commit_hook"    : "relative/path/to-pre-commit-hook.sh",
-    "static_alter_dir"   : "relative/path/to-static-alters/"
+    "username": "root",
+    "password": "root",
+    "host": "localhost",
+    "revision_db_name": "revision",
+    "history_table_name": "history",
+    "port": 3306,
+    "type": "mysql"
 }
 ```
 
 
 It should be pretty self-explanatory except for the revision database and the history table. These fields specify
 where the tool will keep track of what alters have been run. You can set these values to whatever
-names you would like - the tool takes care of creating the database and table. For more information on configuring
-the tool, see the [Configuration](#configuration) section below.
+names you would like - the tool takes care of creating the database and table.
 
 Once your configuration file is correct, you are ready to take a tour of the tool and create your first
 alter. You can find all the commands supported by the tool by reading the help-file, which
@@ -185,40 +184,6 @@ and apply them against your local database by running `schema up`.
 Now you're up and running! You can add more files with `schema new` and control the state of your
 database with `up`, `down`, and `rebuild` commands.
 
-
-## Configuration
-
-Configuration for the schema tool usually exists in a file named `config.json` that is located
-within the current working directory, also the directory containing the alter files. However,
-the tool will also load a _base_ config from `~/.schema-tool`. This file will serve as the _defaults_
-for any configurations not specified in the local `config.json`. If, for example, you work solely
-MySQL then your user/pass and host/port settings can be stored in this file.
-
-Since the bulk of the config options focus around connecting to the various, supported databases;
-not all config values apply for each type of database being used. The following chart attempts
-to define each option based on the database type being used.
-
-**Note:** If `db_name` is set, schema tool will attempt to connect to the DB listed on `init`.
-Therefore it is best practice to create that DB before initializing schema tool or running your alters.
-You should not create or destroy that DB as part of your alter chain.
-
-Value | Type | DB | Description
-------|------|----|------------
-`type` | string | * | Defines the DB type to be used. Possible values: __mysql__, __hive__, __postgres__, __vertica__
-`username` | string | * | Defines the username to use when connecting to the DB.
-`password` | string | * | Defines the password to use when connecting to the DB.
-`host` | string | * | Defines host of DB to connect to. No default provided.
-`port` | int | * | Defines the port of the DB host to connect to. Specific DB support _may_ provide default.
-`db_name` | string | __postgres__, __vertica__ | Determines specific DB to connect to when running alters.
-`schema_name` | string | __postgres__, __vertica__ | Determines specific schema to connect to when running alters.
-`revision_db_name` | string | * | Name of DB to store history information in (for applied alters). __Note__: For Postgres and Vertica, if the DB does not already exist, it will error. Unlike Hive or MySQL, the DB will _not_ be automatically created for you. The _schema_ however will be as defined in __revision_schema_name__.
-`revision_schema_name` | string | __postgres__, __vertica__ | Defines the schema name that the history table will live in.
-`history_table_name` | string | * | Name of table to store history information in (for applied alters).
-`pre_commit_hook` | string | * | Path to script to use as a pre-commit hook. Will be installed when `init` is run.
-`static_alter_dir` | string | * | Path to output "static alter files" when using the `gen-sql` command.
-
-
-
 ## Understanding The Alter Chain
 
 To understand how the tool does its job, you have to understand how it thinks about alters.
@@ -281,45 +246,6 @@ be aware of that each command supports:
 You may run into errors when switching branches often because the tool will get confused on
 what may or may not have ran against your database. Most of the time you can get around this by
 running `schema rebuild -fv`.
-
-## Running Environment Specific Alters
-
-When working on large software systems, it is common to run it in multiple environments
-(prod, staging, sand, test / eq, dev, etc). It happens occasionally that you need to craft
-an alter to only run on a subset of all environment or all but a few environment. To help
-with this dilemma, you can add an additional bit of meta-data to your alters to specify the
-environments it should or should not be run in.
-
-To specify where the alter _should_ run, you can add the following bit of meta-data to the
-top of your alter
-
-```sql
--- require-env: dev, test
-```
-
-This implies that the alter will _only_ be run in `dev` or `test` environment. Similarly, we
-could specify that the alter should _not_ be run in production, which could be defined as
-
-```sql
--- skip-env: prod
-```
-
-It is important to note that since `require-env` works as a whitelist and `skip-env` works as
-a blacklist, that only one config-value can be used at a time within a single alter. Since the DB
-state is used to run the 'down' alters, this is only required in the 'up' alter.
-
-To specify which environment you are currently running with, simply edit your `config.json` to
-indicate with the `env` key. 
-
-```json
-{
-  "env": "dev"
-}
-```
-
-For your local development setup, this is usually a good candidate to put into your global config
-file `~/.schema-tool`. See [Configuration](#configuration) for more information about the global
-config file.
 
 ## Checking and Resolving the Alter Chain
 
@@ -400,7 +326,7 @@ the rebase-based workflow).
 If you run into an issue that results in a script error (Python stacktrace) then please
 open up a ticket in the GitHub issue tracker. Please include the following information
 
-+ Steps to reliably reproduce the issue
++ Steps to reproduce issue
 + Entire error output including stack trace
 
 We'll work with you to resolve the issue and collect any more information that may be
@@ -413,10 +339,6 @@ and send us a pull request. If you have something specific that you'd like to ad
 open up an issue for discussion. If it is a fix for a bug or everyone agrees that it would be
 a useful feature, then submit your pull request. Make sure that your pull request's commit message
 uses one of the [appropriate identifiers][4] to link the pull request to the issue.
-
-If you are making updates to the documentation, please be sure to run `make` with the project's
-`Makefile` to perform all required pre-processing of the docs. You can run `make setup` to install
-any required pre-processors.
 
 [Current contributors][5]
 
