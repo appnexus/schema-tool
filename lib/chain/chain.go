@@ -17,7 +17,6 @@ package chain
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,7 +24,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/appnexus/schema-tool/log"
+	"github.com/appnexus/schema-tool/lib/log"
 )
 
 // Direction of either Up or Down that alter can represent, defined below
@@ -72,6 +71,8 @@ func newDefaultAlter() *Alter {
 
 // AlterGroup represents and up/down pair of Alter objects along with links to
 // "forward" (child) and "back" (parent) AlterGroup objects.
+//
+// AlterGroup objects are a node in a doubly-linked list
 type AlterGroup struct {
 	Up         *Alter
 	Down       *Alter
@@ -81,32 +82,42 @@ type AlterGroup struct {
 	SkipEnv    []string
 }
 
+// Chain is a container to point to the head and tail of a linked list of
+// AlterGroup objects.
 type Chain struct {
 	Head *AlterGroup
 	Tail *AlterGroup
 }
 
+// InvalidMetaDataError is a parsing error specific to invalid meta-data mainly
+// specific to missing fields or invalid values.
 type InvalidMetaDataError string
 
 func (i InvalidMetaDataError) Error() string {
 	return string(i)
 }
 
+// DuplicateRefError is an error only encountered when an alter's unique ID (ref)
+// is found more than once for a single schema directory/chain.
 type DuplicateRefError string
 
 func (d DuplicateRefError) Error() string {
 	return string(d)
 }
 
+// InvalidChainError is an error used during BuildAndValidateChain and thus is a
+// post-parsing error only encountered when validating a given chain. The only
+// exception is that if the initial scan results in an empty chain (no alters in
+// the directory).
 type InvalidChainError string
 
 func (i InvalidChainError) Error() string {
 	return string(i)
 }
 
-// Given an initial scan of a schema-directory and a list of AlterGroup
-// objects, stitch them together into a chain and validate that everything
-// looks peachy.
+// BuildAndValidateChain takes a set of AlterGroups generated from a schema
+// directory, applies some extra validations, builds, and returns a chain
+// (linked list of type `Chain`) of alters.
 func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 
 	for _, group := range groups {
@@ -241,16 +252,16 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 	return chain, nil
 }
 
-// Scan a given directory and return a mapping of AlterRef to AlterGroup
-// objects. The objects returned are un-validated aside from meta-data
-// parsing.
+// ScanDirectory scans a given directory and return a mapping of AlterRef to
+// AlterGroup objects. The objects returned are un-validated aside from
+// meta-data parsing.
 func ScanDirectory(dir string) (map[string]*AlterGroup, error) {
 	stat, err := os.Stat(dir)
 	if err != nil {
 		return nil, err
 	}
 	if !stat.IsDir() {
-		return nil, errors.New(fmt.Sprintf("Path '%s' is not a directory", dir))
+		return nil, fmt.Errorf("Path '%s' is not a directory", dir)
 	}
 
 	alters := make(map[string]*AlterGroup)
@@ -263,32 +274,33 @@ func ScanDirectory(dir string) (map[string]*AlterGroup, error) {
 		if isAlterFile(f.Name()) {
 			filePath := path.Join(dir, f.Name())
 
-			if header, err := readHeader(dir + "/" + f.Name()); err != nil {
+			header, err := readHeader(dir + "/" + f.Name())
+			if err != nil {
 				return nil, err
-			} else {
-				alter, err := parseMeta(header, filePath)
-				if err != nil {
-					return nil, err
-				}
-				group, ok := alters[alter.ref]
-				if !ok {
-					group = &AlterGroup{}
-				}
-				if alter.Direction == Up {
-					if group.Up != nil {
-						return nil, DuplicateRefError(
-							fmt.Sprintf("Duplicate 'up' alter for ref '%s'", alter.ref))
-					}
-					group.Up = alter
-				} else if alter.Direction == Down {
-					if group.Down != nil {
-						return nil, DuplicateRefError(
-							fmt.Sprintf("Duplicate 'down' alter for ref '%s'", alter.ref))
-					}
-					group.Down = alter
-				}
-				alters[alter.ref] = group
 			}
+
+			alter, err := parseMeta(header, filePath)
+			if err != nil {
+				return nil, err
+			}
+			group, ok := alters[alter.ref]
+			if !ok {
+				group = &AlterGroup{}
+			}
+			if alter.Direction == Up {
+				if group.Up != nil {
+					return nil, DuplicateRefError(
+						fmt.Sprintf("Duplicate 'up' alter for ref '%s'", alter.ref))
+				}
+				group.Up = alter
+			} else if alter.Direction == Down {
+				if group.Down != nil {
+					return nil, DuplicateRefError(
+						fmt.Sprintf("Duplicate 'down' alter for ref '%s'", alter.ref))
+				}
+				group.Down = alter
+			}
+			alters[alter.ref] = group
 		}
 	}
 
@@ -313,34 +325,34 @@ func readHeader(filePath string) ([]string, error) {
 	var headerRegex = regexp.MustCompile(`^--`)
 	lines := make([]string, 256)
 
-	if file, err := os.Open(filePath); err != nil {
+	file, err := os.Open(filePath)
+	if err != nil {
 		return lines, err
-	} else {
-		// clone file after we return
-		defer file.Close()
+	}
+	// clone file after we return
+	defer file.Close()
 
-		// read line by line
-		scanner := bufio.NewScanner(file)
-		i := 0
-		for scanner.Scan() {
-			if i == 256 {
-				return lines, InvalidMetaDataError(`Header lines (continuous block of lines starting with '--')
+	// read line by line
+	scanner := bufio.NewScanner(file)
+	i := 0
+	for scanner.Scan() {
+		if i == 256 {
+			return lines, InvalidMetaDataError(`Header lines (continuous block of lines starting with '--')
 exceeds 256. Please add a blank line in-between the meta-data and any
 comment lines that may follow.`)
-			}
-			line := scanner.Text()
-			if headerRegex.MatchString(line) {
-				lines[i] = line
-				i++
-			} else {
-				// hit non-header line, we're done
-				return lines, nil
-			}
 		}
+		line := scanner.Text()
+		if headerRegex.MatchString(line) {
+			lines[i] = line
+			i++
+		} else {
+			// hit non-header line, we're done
+			return lines, nil
+		}
+	}
 
-		if err = scanner.Err(); err != nil {
-			return lines, err
-		}
+	if err = scanner.Err(); err != nil {
+		return lines, err
 	}
 
 	return lines, nil
@@ -376,13 +388,13 @@ func parseMeta(lines []string, filePath string) (*Alter, error) {
 				}
 				alter.backRef = value
 			case "direction":
-				value_lower := strings.ToLower(value)
-				if value_lower == "up" {
+				valueLower := strings.ToLower(value)
+				if valueLower == "up" {
 					alter.Direction = Up
-				} else if value_lower == "down" {
+				} else if valueLower == "down" {
 					alter.Direction = Down
 				} else {
-					return nil, InvalidMetaDataError(fmt.Sprintf("Invalid direction '%s' found in '%s'", value_lower, filePath))
+					return nil, InvalidMetaDataError(fmt.Sprintf("Invalid direction '%s' found in '%s'", valueLower, filePath))
 				}
 			case "require-env":
 				requiredEnvs := strings.Split(value, ",")

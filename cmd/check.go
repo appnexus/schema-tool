@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/appnexus/schema-tool/chain"
+	"github.com/appnexus/schema-tool/lib/chain"
 	"github.com/spf13/cobra"
 )
 

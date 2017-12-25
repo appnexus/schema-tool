@@ -21,14 +21,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var noRevisionGenSql bool
-var noSqlGenSql bool
-var downGenSql bool
-var includeRevisionAlterGenSql bool
-var writeToFileGenSql bool
+var noRevisionGenSQL bool
+var noSQLGenSQL bool
+var downGenSQL bool
+var includeRevisionAlterGenSQL bool
+var writeToFileGenSQL bool
 
 // genSqlCmd represents the genSql command
-var genSqlCmd = &cobra.Command{
+var genSQLCmd = &cobra.Command{
 	Use:   "gen-sql",
 	Short: "Generate SQL for a specified reference (includes revision-history alter)",
 	Long: `
@@ -43,25 +43,25 @@ See the docs for a full discussion on why gen-sql is useful.`,
 }
 
 func init() {
-	RootCmd.AddCommand(genSqlCmd)
+	RootCmd.AddCommand(genSQLCmd)
 
 	// Here you will define your flags and configuration settings.
 
-	genSqlCmd.PersistentFlags().BoolVarP(&noRevisionGenSql, "no-revision", "R", false,
+	genSQLCmd.PersistentFlags().BoolVarP(&noRevisionGenSQL, "no-revision", "R", false,
 		"Do not print out the revision-history alter statements")
-	genSqlCmd.PersistentFlags().BoolVarP(&noSqlGenSql, "no-sql", "S", false,
+	genSQLCmd.PersistentFlags().BoolVarP(&noSQLGenSQL, "no-sql", "S", false,
 		"Do not generate SQL for the actual alters, just revision inserts")
-	genSqlCmd.PersistentFlags().BoolVarP(&downGenSql, "down", "D", false,
+	genSQLCmd.PersistentFlags().BoolVarP(&downGenSQL, "down", "D", false,
 		"Generate SQL for down-alter instead of up (default)")
-	genSqlCmd.PersistentFlags().BoolVarP(&includeRevisionAlterGenSql, "include-rev-query", "q", false,
+	genSQLCmd.PersistentFlags().BoolVarP(&includeRevisionAlterGenSQL, "include-rev-query", "q", false,
 		"Include the revision query in the generated sql")
-	genSqlCmd.PersistentFlags().BoolVarP(&writeToFileGenSql, "write-to-file", "w", false,
+	genSQLCmd.PersistentFlags().BoolVarP(&writeToFileGenSQL, "write-to-file", "w", false,
 		"Do not print to STDOUT. Instead, write SQL to file in 'static_alter_dir' directory specified in config.")
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// genSqlCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// genSQLCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// genSqlCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// genSQLCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
