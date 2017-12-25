@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/appnexus/schema-tool/log"
+	"github.com/appnexus/schema-tool/lib/log"
 )
 
 //------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ func TestScanNonDirFile(t *testing.T) {
 
 func TestNormalSchemaDirs(t *testing.T) {
 	dir, _ := os.Getwd()
-	alterBaseDir := dir + "/../test/chains/"
+	alterBaseDir := dir + "/../../test/chains/"
 
 	testData := []struct {
 		dirName   string
@@ -76,7 +76,7 @@ func TestScanInvalidButValidForNowSchemas(t *testing.T) {
 	// This means that some chains may be invalid, but still successfully parsed
 	// according to this function. That is what we're testing here.
 	dir, _ := os.Getwd()
-	alterBaseDir := dir + "/../test/chains/"
+	alterBaseDir := dir + "/../../test/chains/"
 
 	testData := []struct {
 		dirName   string
@@ -109,7 +109,7 @@ func TestScanInvalidSchemas(t *testing.T) {
 	// Even though ScanDirectory does not do full-chain validtions, it can still
 	// error on individually invalid alters (missing meta-data, etc).
 	dir, _ := os.Getwd()
-	alterBaseDir := dir + "/../test/chains/"
+	alterBaseDir := dir + "/../../test/chains/"
 
 	testData := []struct {
 		dirName string
@@ -151,7 +151,7 @@ func TestScanInvalidSchemas(t *testing.T) {
 //------------------------------------------------------------------------------
 func TestReadHeaderNormalFile(t *testing.T) {
 	dir, _ := os.Getwd()
-	alter := dir + "/../test/chains/normal-chain/1234-init-up.sql"
+	alter := dir + "/../../test/chains/normal-chain/1234-init-up.sql"
 	header, err := readHeader(alter)
 
 	if err != nil {
@@ -169,7 +169,7 @@ func TestReadHeaderNormalFile(t *testing.T) {
 
 func TestReadHeaderNormalFileHeaderOnly(t *testing.T) {
 	dir, _ := os.Getwd()
-	alter := dir + "/../test/chains/normal-chain/1234-init-down.sql"
+	alter := dir + "/../../test/chains/normal-chain/1234-init-down.sql"
 	header, err := readHeader(alter)
 
 	if err != nil {
@@ -187,7 +187,7 @@ func TestReadHeaderNormalFileHeaderOnly(t *testing.T) {
 
 func TestReaderHeaderNonExistantFile(t *testing.T) {
 	dir, _ := os.Getwd()
-	alter := dir + "/../test/chains/normal-chain/1234-dont-exist.up"
+	alter := dir + "/../../test/chains/normal-chain/1234-dont-exist.up"
 	if _, err := readHeader(alter); err == nil {
 		t.Fail()
 	}
@@ -195,7 +195,7 @@ func TestReaderHeaderNonExistantFile(t *testing.T) {
 
 func TestHeaderTooLarge(t *testing.T) {
 	dir, _ := os.Getwd()
-	alter := dir + "/../test/chains/invalid-headers/1234-init-up.sql"
+	alter := dir + "/../../test/chains/invalid-headers/1234-init-up.sql"
 	if _, err := readHeader(alter); err == nil {
 		t.Fail()
 	}
@@ -245,40 +245,40 @@ func TestValidMetaData(t *testing.T) {
 		alter   *Alter
 	}{
 		// valid entries (general)
-		{"--ref: 1234abcd\n--direction: down", false, &Alter{ref: "1234abcd", direction: Down}},
-		{"--ref: 1234abcd\n--direction: DOWN", false, &Alter{ref: "1234abcd", direction: Down}},
-		{"--ref: 1234\n--backref:abcd\n--direction: down", false, &Alter{ref: "1234", backRef: "abcd", direction: Down}},
+		{"--ref: 1234abcd\n--direction: down", false, &Alter{ref: "1234abcd", Direction: Down}},
+		{"--ref: 1234abcd\n--direction: DOWN", false, &Alter{ref: "1234abcd", Direction: Down}},
+		{"--ref: 1234\n--backref:abcd\n--direction: down", false, &Alter{ref: "1234", backRef: "abcd", Direction: Down}},
 		// valid entries (test spacing)
-		{"--ref: 1234\n--direction: up", false, &Alter{ref: "1234", direction: Up}},
-		{"--ref:1234\n--direction:up", false, &Alter{ref: "1234", direction: Up}},
-		{"-- ref: 1234\n-- direction: up", false, &Alter{ref: "1234", direction: Up}},
-		{"-- ref:1234\n-- direction:up", false, &Alter{ref: "1234", direction: Up}},
+		{"--ref: 1234\n--direction: up", false, &Alter{ref: "1234", Direction: Up}},
+		{"--ref:1234\n--direction:up", false, &Alter{ref: "1234", Direction: Up}},
+		{"-- ref: 1234\n-- direction: up", false, &Alter{ref: "1234", Direction: Up}},
+		{"-- ref:1234\n-- direction:up", false, &Alter{ref: "1234", Direction: Up}},
 		// valid entries (require-env)
 		{"--ref:1234\n--direction:up\n--require-env: one", false,
-			&Alter{ref: "1234", direction: Up, requireEnv: []string{"one"}}},
+			&Alter{ref: "1234", Direction: Up, requireEnv: []string{"one"}}},
 		{"--ref:1234\n--direction:up\n--require-env: one,", false,
-			&Alter{ref: "1234", direction: Up, requireEnv: []string{"one"}}},
+			&Alter{ref: "1234", Direction: Up, requireEnv: []string{"one"}}},
 		{"--ref:1234\n--direction:up\n--require-env: one,,,", false,
-			&Alter{ref: "1234", direction: Up, requireEnv: []string{"one"}}},
+			&Alter{ref: "1234", Direction: Up, requireEnv: []string{"one"}}},
 		{"--ref:1234\n--direction:up\n--require-env: one,two,three", false,
-			&Alter{ref: "1234", direction: Up, requireEnv: []string{"one", "two", "three"}}},
+			&Alter{ref: "1234", Direction: Up, requireEnv: []string{"one", "two", "three"}}},
 		// valid entries (skip-env)
 		{"--ref:1234\n--direction:up\n--skip-env: one", false,
-			&Alter{ref: "1234", direction: Up, skipEnv: []string{"one"}}},
+			&Alter{ref: "1234", Direction: Up, skipEnv: []string{"one"}}},
 		{"--ref:1234\n--direction:up\n--skip-env: one,", false,
-			&Alter{ref: "1234", direction: Up, skipEnv: []string{"one"}}},
+			&Alter{ref: "1234", Direction: Up, skipEnv: []string{"one"}}},
 		{"--ref:1234\n--direction:up\n--skip-env: one,,,", false,
-			&Alter{ref: "1234", direction: Up, skipEnv: []string{"one"}}},
+			&Alter{ref: "1234", Direction: Up, skipEnv: []string{"one"}}},
 		{"--ref:1234\n--direction:up\n--skip-env: one,two,three", false,
-			&Alter{ref: "1234", direction: Up, skipEnv: []string{"one", "two", "three"}}},
+			&Alter{ref: "1234", Direction: Up, skipEnv: []string{"one", "two", "three"}}},
 		// valid ignore unknown keys
-		{"--ref: 1234\n--direction: up\n--boop:boop", false, &Alter{ref: "1234", direction: Up}},
-		{"--ref: 1234\n--direction: up\n--reff:meow", false, &Alter{ref: "1234", direction: Up}},
+		{"--ref: 1234\n--direction: up\n--boop:boop", false, &Alter{ref: "1234", Direction: Up}},
+		{"--ref: 1234\n--direction: up\n--reff:meow", false, &Alter{ref: "1234", Direction: Up}},
 		// ignore empty env keys
-		{"--ref:1234\n--direction:up\n--require-env: ,,,", false, &Alter{ref: "1234", direction: Up}},
-		{"--ref:1234\n--direction:up\n--require-env: ", false, &Alter{ref: "1234", direction: Up}},
-		{"--ref:1234\n--direction:up\n--skip-env: ", false, &Alter{ref: "1234", direction: Up}},
-		{"--ref:1234\n--direction:up\n--skip-env: ,,", false, &Alter{ref: "1234", direction: Up}},
+		{"--ref:1234\n--direction:up\n--require-env: ,,,", false, &Alter{ref: "1234", Direction: Up}},
+		{"--ref:1234\n--direction:up\n--require-env: ", false, &Alter{ref: "1234", Direction: Up}},
+		{"--ref:1234\n--direction:up\n--skip-env: ", false, &Alter{ref: "1234", Direction: Up}},
+		{"--ref:1234\n--direction:up\n--skip-env: ,,", false, &Alter{ref: "1234", Direction: Up}},
 
 		// invalid missing direction
 		{"--ref: 1234\n--direction: sideways", true, nil},
@@ -306,7 +306,7 @@ func TestValidMetaData(t *testing.T) {
 			if alter.backRef != test.alter.backRef {
 				t.Fail()
 			}
-			if alter.direction != test.alter.direction {
+			if alter.Direction != test.alter.Direction {
 				t.Fail()
 			}
 			if !equalStringSlices(alter.requireEnv, test.alter.requireEnv) {
