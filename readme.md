@@ -1,7 +1,8 @@
 # Schema Tool
 
-<!--
 [![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
+
+<!--
 [![Code Health](https://landscape.io/github/appnexus/schema-tool/master/landscape.svg?style=flat)](https://landscape.io/github/appnexus/schema-tool/master)
 -->
 
@@ -38,7 +39,7 @@ and disallowing a merge.)  The features of the tool aim to allow developers to
 write alter code in their respective branches, easily and safely merge that
 code into the main alter chain, and finally run those alters on target databases (dev, QA, production, etc).
 
-Currently the tool supports MySQL, Postgres, and Vertica.
+Currently the tool supports MySQL and Postgres (Vertica & Hive are a WIP).
 
 The key features of the tool are:
 
@@ -53,27 +54,40 @@ is an excellent DSL already, so there is no need for that.
 
 ## Requirements
 
-+ Python 2.7 (may work with other versions, only tested against 2.7)
-+ [`psycopg2`][3] if planning to use Schema Tool with Postgres
-+ [`vertica-python`][6] and [`psycopg2`][3] (required by Vertica python) if planning to use Schema Tool with Vertica
-+ [`pyhs2`][7] if planning to use Schema Tool with Hive
++ `mysql` client CLI, used to run alter files
++ `pgsql` client CLI, used to run alter files
 
 ## Getting Started
 
-You need to download the tool and (preferably) have the `schema` executable somewhere on
-your path. You can get started with the tool simply by doing:
+Schema-tool is written in Go and thus can be installed as a single, pre-compiled binary or through the
+Go toolchain.
 
+### Pre-Compiled Binary
 ```shell
 mkdir -p ~/bin
-cd ~/bin
-git clone git@github.com:appnexus/schema-tool.git schema-tool
+curl -o ~/bin/schema https://TODO: get GitHub URL for releases
+chmod +x ~/bin/schema
 
-echo 'export PATH="$HOME/bin/schema-tool:$PATH"' >> ~/.bashrc
-# or
-echo 'alias schema="$HOME/bin/schema-tool/schema.py"' >> ~/.bashrc
-
-source ~/.bashrc
+# Make sure to add this to your .bashrc/.zshrc/etc
+export PATH=$HOME/bin:$PATH
 ```
+
+Releases exist for the following platform and architectures.
+
+Platform | Supported Architectures |
+---------|-------------------------|
+Linux    | `amd64`, `386`          |
+Mac OS   | `amd64`, `386`          |
+Windows  | `amd64`, `386`          |
+
+### Go Toolchain
+Since the schema-tool is built with Go, you can install using the `go get` command via:
+
+```bash
+go get -u github.com/appnexus/schema-tool
+```
+
+### Creating a New Project
 
 If you are creating a new project, you can simply do the following:
 
@@ -118,9 +132,6 @@ alter. You can find all the commands supported by the tool by reading the help-f
 you can get to via `schema -h`. You should see the following:
 
 ```text
-Usage: schema command [options]
-
-(ENV)01:alter(master % u=) $ schema -h
 Usage: schema command [options]
 
 Commands:
