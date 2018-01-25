@@ -55,10 +55,17 @@ func NewSystemError(code string, message string) *ErrorMsg {
 func WriteErrorResponse(w http.ResponseWriter, e *ErrorMsg) {
 	w.Header().Add("Content-Type", "application/json")
 	if e.ErrorType == ErrorTypeUser {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteErrorResponseWithStatus(w, e, http.StatusBadRequest)
 	} else {
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteErrorResponseWithStatus(w, e, http.StatusInternalServerError)
 	}
+}
+
+// WriteErrorResponseWithStatus is a utility function to respond with errors using a
+// custom status code not dependent upon the ErrorType
+func WriteErrorResponseWithStatus(w http.ResponseWriter, e *ErrorMsg, status int) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(status)
 	err := json.NewEncoder(w).Encode(e)
 	if err != nil {
 		log.Error.Printf("Unexpected error while encoding JSON response: %v\n", err)
@@ -89,4 +96,7 @@ const (
 	// formatted correctly (i.e. It does not deserialize into the expected JSON request
 	// body)
 	MalformedRequest = "MALFORMED_REQUEST"
+
+	// NotFound is an error returned for when any object being looked up is not found
+	NotFound = "NOT_FOUND"
 )

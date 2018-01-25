@@ -17,7 +17,14 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/appnexus/schema-tool/lib/chain"
+
+	"github.com/appnexus/schema-tool/lib/log"
+	"github.com/gorilla/mux"
+	uuid "github.com/satori/go.uuid"
 )
 
 // createSchema is the JSON representation used to add a schema via the
@@ -31,6 +38,16 @@ type createSchema struct {
 type createdSchema struct {
 	ID string `json:"id"`
 }
+
+// schema represents the internal representation of how schemas are stored by the
+// schema portion of the server
+type schema struct {
+	ID    string `json:"id"`
+	Dir   string `json:"directory"`
+	Empty bool   `json:"empty"`
+}
+
+var schemas = make(map[string]schema, 128)
 
 // newSchemaHandler accepts a `createSchema` struct and scans the directory on the
 // host the server is running on and creates an in-memory representation of the
@@ -47,8 +64,81 @@ func (s *httpServer) newSchemaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if directory exists
-	// scan directory and build local representation
-	// store in store and generate ID
+	if create.Empty {
+		// generate ID and store empty schema
+		s := schema{
+			ID:    uuid.NewV4().String(),
+			Dir:   create.Dir,
+			Empty: true,
+		}
+		schemas[s.ID] = s
+
+		// write ID back to HTTP response
+		createJSON := createdSchema{ID: s.ID}
+		w.Header().Add("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(createJSON)
+		if err != nil {
+			log.Error.Printf("Unexpected error while encoding JSON response: %v\n", err)
+		}
+		return
+	}
+
+	// check if directory exists & scan directory and build local representation
+	_, err = chain.ScanDirectory(create.Dir)
+	if err != nil {
+		// wrap up the error and return it to the user
+		return
+	}
+	// generate ID and store schema
 	// return ID
+}
+
+// getSchemaByIDHandler returns a single schema object or a 404 response error if it cannot
+// be found.
+func (s *httpServer) getSchemaByIDHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if id, ok := vars["id"]; ok {
+		if schema, ok := schemas[id]; ok {
+			w.Header().Add("Content-Type", "application/json")
+			err := json.NewEncoder(w).Encode(schema)
+			if err != nil {
+				log.Error.Printf("Unexpected error while encoding JSON response: %v\n", err)
+			}
+			return
+		}
+		WriteErrorResponse(w, NewUserError(NotFound, fmt.Sprintf("schema with id '%s' was not found", id)))
+		return
+	}
+
+	WriteErrorResponse(w, NewUserError(MalformedRequest, "No ID specified to retrieve"))
+}
+
+// getAllSchemasHandler dumps all known schemas back to the user. This handler should never return
+// anything but a successful response, even if just returning an empty array.
+func (s *httpServer) getAllSchemasHandler(w http.ResponseWriter, r *http.Request) {
+	schemaList := make([]schema, len(schemas))
+	for _, schema := range schemas {
+		schemaList = append(schemaList, schema)
+	}
+	w.Header().Add("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(schemaList)
+	if err != nil {
+		log.Error.Printf("Unexpected error while encoding JSON response: %v\n", err)
+	}
+}
+
+// deleteSchemaHandler deletes a schema from the internal store. Note however that this
+// doesn't take any action on the underlying filesystem.
+func (s *httpServer) deleteSchemaHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if id, ok := vars["id"]; ok {
+		if _, ok := schemas[id]; ok {
+			delete(schemas, id)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		WriteErrorResponse(w, NewUserError(NotFound, fmt.Sprintf("schema with id '%s' was not found", id)))
+		return
+	}
+	WriteErrorResponse(w, NewUserError(MalformedRequest, "No ID specified to retrieve"))
 }

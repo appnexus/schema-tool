@@ -50,6 +50,9 @@ func Start(c *Config) error {
 	}
 	r := mux.NewRouter()
 	r.HandleFunc("/schema", server.newSchemaHandler).Methods("POST")
+	r.HandleFunc("/schema", server.getAllSchemasHandler).Methods("GET")
+	r.HandleFunc("/schema/{id}", server.getSchemaByIDHandler).Methods("GET")
+	r.HandleFunc("/schema/{id}", server.deleteSchemaHandler).Methods("DELETE")
 
 	if c.Port <= 0 {
 		port, err := getFreePort()

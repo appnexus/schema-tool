@@ -89,36 +89,42 @@ type Chain struct {
 	Tail *AlterGroup
 }
 
-// InvalidMetaDataError is a parsing error specific to invalid meta-data mainly
-// specific to missing fields or invalid values.
-type InvalidMetaDataError string
+const (
+	// ErrCyclicChain indicates a cyclic chain (no head or tail)
+	ErrCyclicChain = iota
+	// ErrDuplicateRef indicates a repeated unique 'ref' identifier across unique alters
+	ErrDuplicateRef = iota
+	// ErrInvalidMetaData represents the majority of errors encountered when parsing
+	// meta-data of an alter.
+	ErrInvalidMetaData = iota
+	// ErrMissingAlterPair indicates an up without a down alter (or vice versa)
+	ErrMissingAlterPair = iota
+	// ErrNonexistentDirectory indicates that a directory cannot be scanned nor an alter-
+	// chain created because the given directory cannot be found or is not a directory
+	ErrNonexistentDirectory int = iota
+	// ErrUnreadableAlter indicates that a file believed to be an alter file is unreadable
+	// for some reason outside the scope of this program
+	ErrUnreadableAlter = iota
+	// ErrEmptyDirectory indicates that the directory scanned contains no schema files
+	ErrEmptyDirectory = iota
+)
 
-func (i InvalidMetaDataError) Error() string {
-	return string(i)
+// Error is a custom error type that implements the error interface but
+// carriers some extra context as to the cause of the error (to be used programatically).
+type Error struct {
+	ErrType    int
+	Message    string
+	Underlying error
 }
 
-// DuplicateRefError is an error only encountered when an alter's unique ID (ref)
-// is found more than once for a single schema directory/chain.
-type DuplicateRefError string
-
-func (d DuplicateRefError) Error() string {
-	return string(d)
-}
-
-// InvalidChainError is an error used during BuildAndValidateChain and thus is a
-// post-parsing error only encountered when validating a given chain. The only
-// exception is that if the initial scan results in an empty chain (no alters in
-// the directory).
-type InvalidChainError string
-
-func (i InvalidChainError) Error() string {
-	return string(i)
+func (ce *Error) Error() string {
+	return ce.Message
 }
 
 // BuildAndValidateChain takes a set of AlterGroups generated from a schema
 // directory, applies some extra validations, builds, and returns a chain
 // (linked list of type `Chain`) of alters.
-func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
+func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, *Error) {
 
 	for _, group := range groups {
 		// Validate groups have up/down pair
@@ -129,23 +135,31 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 				missingDirection = "up"
 				other = group.Down
 			}
-			return nil, InvalidChainError(fmt.Sprintf("Missing %s alter for '%s'",
-				missingDirection, other.ref))
+			return nil, &Error{
+				ErrType: ErrMissingAlterPair,
+				Message: fmt.Sprintf("Missing %s alter for '%s'", missingDirection, other.ref),
+			}
 		}
 
 		// validate matching back-ref's
 		if group.Up.backRef != group.Down.backRef {
-			return nil, InvalidChainError(fmt.Sprintf("'back-ref' values for %s do not match (%s and %s)",
-				group.Up.ref, group.Up.backRef, group.Down.backRef))
+			return nil, &Error{
+				ErrType: ErrInvalidMetaData,
+				Message: fmt.Sprintf("'back-ref' values for %s do not match (%s and %s)",
+					group.Up.ref, group.Up.backRef, group.Down.backRef),
+			}
 		}
 
 		// Validate skip-env(s) for group
 		if len(group.Up.skipEnv) != len(group.Down.skipEnv) {
-			return nil, InvalidChainError(fmt.Sprintf(
-				"Different number of skip-env's found in:\n"+
-					"\t%s\n\t%s\n"+
-					"These files must contain the same skip-env values.",
-				group.Up.FileName, group.Down.FileName))
+			return nil, &Error{
+				ErrType: ErrInvalidMetaData,
+				Message: fmt.Sprintf(
+					"Different number of skip-env's found in:\n"+
+						"\t%s\n\t%s\n"+
+						"These files must contain the same skip-env values.",
+					group.Up.FileName, group.Down.FileName),
+			}
 		}
 		for _, skipUp := range group.Up.skipEnv {
 			found := false
@@ -156,17 +170,22 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 				}
 			}
 			if !found {
-				return nil, InvalidChainError(fmt.Sprintf(
-					"skip-env value '%s' is not found in both up & down alters", skipUp))
+				return nil, &Error{
+					ErrType: ErrInvalidMetaData,
+					Message: fmt.Sprintf(
+						"skip-env value '%s' is not found in both up & down alters", skipUp),
+				}
 			}
 		}
 		group.SkipEnv = group.Up.skipEnv
 
 		// Validate require-env(s) for group
 		if len(group.Up.requireEnv) != len(group.Down.requireEnv) {
-			return nil, InvalidChainError(fmt.Sprintf(
-				"Uneven number of require-env's found in '%s' and '%s'",
-				group.Up.FileName, group.Down.FileName))
+			return nil, &Error{
+				ErrType: ErrInvalidMetaData,
+				Message: fmt.Sprintf("Uneven number of require-env's found in '%s' and '%s'",
+					group.Up.FileName, group.Down.FileName),
+			}
 		}
 		for _, requireUp := range group.Up.requireEnv {
 			found := false
@@ -177,8 +196,12 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 				}
 			}
 			if !found {
-				return nil, InvalidChainError(fmt.Sprintf(
-					"require-env value '%s' is not found in both up & down alters", requireUp))
+				return nil, &Error{
+					ErrType: ErrInvalidMetaData,
+					Message: fmt.Sprintf(
+						"require-env value '%s' is not found in both up & down alters",
+						requireUp),
+				}
 			}
 		}
 		group.RequireEnv = group.Up.requireEnv
@@ -199,8 +222,11 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 		}
 		parent, ok := groups[backRef]
 		if !ok {
-			return nil, InvalidChainError(fmt.Sprintf("Invalid backref '%s' found for '%s'",
-				backRef, group.Up.FileName))
+			return nil, &Error{
+				ErrType: ErrInvalidMetaData,
+				Message: fmt.Sprintf("Invalid backref '%s' found for '%s'",
+					backRef, group.Up.FileName),
+			}
 		}
 
 		// is always nil before set, impossible for previous loop to write this value
@@ -209,11 +235,14 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 		// If a forward-ref is not nil, then it has previously been established as a
 		// parent alter. We have found a divergence in the chain.
 		if parent.ForwardRef != nil {
-			return nil, InvalidChainError(fmt.Sprintf(
-				"Duplicate parent defined in %s and %s - both point to %s. Chain must be linear.",
-				parent.ForwardRef.Up.ref,
-				group.Up.ref,
-				parent.Up.ref))
+			return nil, &Error{
+				ErrType: ErrInvalidMetaData,
+				Message: fmt.Sprintf(
+					"Duplicate parent defined in %s and %s - both point to %s. Chain must be linear.",
+					parent.ForwardRef.Up.ref,
+					group.Up.ref,
+					parent.Up.ref),
+			}
 		}
 		parent.ForwardRef = group
 	}
@@ -228,10 +257,13 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 	for _, group := range groups {
 		if group.BackRef == nil {
 			if head != nil {
-				return nil, InvalidChainError(fmt.Sprintf(
-					"Duplicate root alters found (%s and %s). Chain must have one root alter.",
-					group.Up.ref,
-					head.Up.ref))
+				return nil, &Error{
+					ErrType: ErrInvalidMetaData,
+					Message: fmt.Sprintf(
+						"Duplicate root alters found (%s and %s). Chain must have one root alter.",
+						group.Up.ref,
+						head.Up.ref),
+				}
 			}
 			head = group
 		}
@@ -242,7 +274,10 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 	}
 
 	if head == nil || tail == nil {
-		return nil, InvalidChainError("Chain is cyclic and has no head or tail")
+		return nil, &Error{
+			ErrType: ErrCyclicChain,
+			Message: "Chain is cyclic and has no head or tail",
+		}
 	}
 
 	chain := &Chain{
@@ -255,13 +290,14 @@ func BuildAndValidateChain(groups map[string]*AlterGroup) (*Chain, error) {
 // ScanDirectory scans a given directory and return a mapping of AlterRef to
 // AlterGroup objects. The objects returned are un-validated aside from
 // meta-data parsing.
-func ScanDirectory(dir string) (map[string]*AlterGroup, error) {
+func ScanDirectory(dir string) (map[string]*AlterGroup, *Error) {
 	stat, err := os.Stat(dir)
-	if err != nil {
-		return nil, err
-	}
-	if !stat.IsDir() {
-		return nil, fmt.Errorf("Path '%s' is not a directory", dir)
+	if err != nil || !stat.IsDir() {
+		return nil, &Error{
+			Underlying: err,
+			Message:    fmt.Sprintf("Path '%s' is not a directory", dir),
+			ErrType:    ErrNonexistentDirectory,
+		}
 	}
 
 	alters := make(map[string]*AlterGroup)
@@ -274,14 +310,14 @@ func ScanDirectory(dir string) (map[string]*AlterGroup, error) {
 		if isAlterFile(f.Name()) {
 			filePath := path.Join(dir, f.Name())
 
-			header, err := readHeader(dir + "/" + f.Name())
-			if err != nil {
-				return nil, err
+			header, cErr := readHeader(dir + "/" + f.Name())
+			if cErr != nil {
+				return nil, cErr
 			}
 
-			alter, err := parseMeta(header, filePath)
-			if err != nil {
-				return nil, err
+			alter, cErr := parseMeta(header, filePath)
+			if cErr != nil {
+				return nil, cErr
 			}
 			group, ok := alters[alter.ref]
 			if !ok {
@@ -289,14 +325,18 @@ func ScanDirectory(dir string) (map[string]*AlterGroup, error) {
 			}
 			if alter.Direction == Up {
 				if group.Up != nil {
-					return nil, DuplicateRefError(
-						fmt.Sprintf("Duplicate 'up' alter for ref '%s'", alter.ref))
+					return nil, &Error{
+						ErrType: ErrDuplicateRef,
+						Message: fmt.Sprintf("Duplicate 'up' alter for ref '%s'", alter.ref),
+					}
 				}
 				group.Up = alter
 			} else if alter.Direction == Down {
 				if group.Down != nil {
-					return nil, DuplicateRefError(
-						fmt.Sprintf("Duplicate 'down' alter for ref '%s'", alter.ref))
+					return nil, &Error{
+						ErrType: ErrDuplicateRef,
+						Message: fmt.Sprintf("Duplicate 'down' alter for ref '%s'", alter.ref),
+					}
 				}
 				group.Down = alter
 			}
@@ -305,8 +345,10 @@ func ScanDirectory(dir string) (map[string]*AlterGroup, error) {
 	}
 
 	if len(alters) == 0 {
-		return nil, InvalidChainError(fmt.Sprintf(
-			"Directory '%s' does not contain any alters", dir))
+		return nil, &Error{
+			ErrType: ErrEmptyDirectory,
+			Message: fmt.Sprintf("Directory '%s' does not contain any alters", dir),
+		}
 	}
 
 	return alters, nil
@@ -321,13 +363,17 @@ func isAlterFile(name string) bool {
 
 // Read the first N lines of an alter file that represent the "header." This is
 // the bit of stuff that contains all the meta-data required in alters.
-func readHeader(filePath string) ([]string, error) {
+func readHeader(filePath string) ([]string, *Error) {
 	var headerRegex = regexp.MustCompile(`^--`)
 	lines := make([]string, 256)
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		return lines, err
+		return lines, &Error{
+			ErrType:    ErrUnreadableAlter,
+			Message:    fmt.Sprintf("Unable to read file '%s'", filePath),
+			Underlying: err,
+		}
 	}
 	// clone file after we return
 	defer file.Close()
@@ -337,9 +383,12 @@ func readHeader(filePath string) ([]string, error) {
 	i := 0
 	for scanner.Scan() {
 		if i == 256 {
-			return lines, InvalidMetaDataError(`Header lines (continuous block of lines starting with '--')
+			return lines, &Error{
+				ErrType: ErrInvalidMetaData,
+				Message: `Header lines (continuous block of lines starting with '--')
 exceeds 256. Please add a blank line in-between the meta-data and any
-comment lines that may follow.`)
+comment lines that may follow.`,
+			}
 		}
 		line := scanner.Text()
 		if headerRegex.MatchString(line) {
@@ -352,7 +401,11 @@ comment lines that may follow.`)
 	}
 
 	if err = scanner.Err(); err != nil {
-		return lines, err
+		return lines, &Error{
+			ErrType:    ErrUnreadableAlter,
+			Message:    fmt.Sprintf("Unable to read file '%s'", filePath),
+			Underlying: err,
+		}
 	}
 
 	return lines, nil
@@ -361,7 +414,7 @@ comment lines that may follow.`)
 // Parse the meta-information from the file and return an Alter object.
 // Returns error if meta cannot be obtained or required information is
 // missing.
-func parseMeta(lines []string, filePath string) (*Alter, error) {
+func parseMeta(lines []string, filePath string) (*Alter, *Error) {
 	// expect meta-lines to be single-line and in the form of
 	//   "-- key: value"
 	// regex checks for extraneous whitespace
@@ -379,12 +432,18 @@ func parseMeta(lines []string, filePath string) (*Alter, error) {
 			switch key {
 			case "ref":
 				if !isValidRef(value) {
-					return nil, InvalidMetaDataError("Invalid 'ref' value found in " + filePath)
+					return nil, &Error{
+						ErrType: ErrInvalidMetaData,
+						Message: "Invalid 'ref' value found in " + filePath,
+					}
 				}
 				alter.ref = value
 			case "backref":
 				if value == "" {
-					return nil, InvalidMetaDataError(fmt.Sprintf("Invalid 'backref' value found in '%s'", filePath))
+					return nil, &Error{
+						ErrType: ErrInvalidMetaData,
+						Message: fmt.Sprintf("Invalid 'backref' value found in '%s'", filePath),
+					}
 				}
 				alter.backRef = value
 			case "direction":
@@ -394,7 +453,11 @@ func parseMeta(lines []string, filePath string) (*Alter, error) {
 				} else if valueLower == "down" {
 					alter.Direction = Down
 				} else {
-					return nil, InvalidMetaDataError(fmt.Sprintf("Invalid direction '%s' found in '%s'", valueLower, filePath))
+					return nil, &Error{
+						ErrType: ErrInvalidMetaData,
+						Message: fmt.Sprintf("Invalid direction '%s' found in '%s'",
+							valueLower, filePath),
+					}
 				}
 			case "require-env":
 				requiredEnvs := strings.Split(value, ",")
@@ -419,14 +482,23 @@ func parseMeta(lines []string, filePath string) (*Alter, error) {
 	}
 
 	if alter.ref == "" {
-		return nil, InvalidMetaDataError("Missing required field 'ref'")
+		return nil, &Error{
+			ErrType: ErrInvalidMetaData,
+			Message: "Missing required field 'ref'",
+		}
 	}
 	// Note: backref isn't necessary here cause it could be the init file
 	if alter.Direction == Undefined {
-		return nil, InvalidMetaDataError("Missing required field 'direction'")
+		return nil, &Error{
+			ErrType: ErrInvalidMetaData,
+			Message: "Missing required field 'direction'",
+		}
 	}
 	if len(alter.requireEnv) > 0 && len(alter.skipEnv) > 0 {
-		return nil, InvalidMetaDataError("Mutually exclusive fields 'require-env' and 'skip-env' cannot be used together")
+		return nil, &Error{
+			ErrType: ErrInvalidMetaData,
+			Message: "Mutually exclusive fields 'require-env' and 'skip-env' cannot be used together",
+		}
 	}
 
 	return alter, nil
