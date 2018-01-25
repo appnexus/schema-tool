@@ -47,7 +47,7 @@ type schema struct {
 	Empty bool   `json:"empty"`
 }
 
-var schemas = make(map[string]schema, 128)
+var schemas = make(map[string]schema, 256)
 
 // newSchemaHandler accepts a `createSchema` struct and scans the directory on the
 // host the server is running on and creates an in-memory representation of the

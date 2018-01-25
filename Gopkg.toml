@@ -27,12 +27,16 @@
 
 [[constraint]]
   name = "github.com/spf13/cobra"
+  revision = "f91529fc609202eededff4de2dc0ba2f662240a3"
 
 [[constraint]]
   name = "github.com/spf13/viper"
+  revision = "aafc9e6bc7b7bb53ddaa75a5ef49a17d6e654be5"
 
 [[constraint]]
-name = "github.com/gorilla/mux"
+  name = "github.com/gorilla/mux"
+  version = "v1.6.1"
 
 [[constraint]]
-name = "github.com/satori/go.uuid"
+  name = "github.com/satori/go.uuid"
+  version = "v1.2.0"
