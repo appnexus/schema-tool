@@ -39,7 +39,7 @@ setup:
 	go get -u github.com/tools/godep
 	go get -u github.com/golang/lint/golint
 	go get -u github.com/jstemmer/gotags
-	godep restore
+	dep ensure
 	npm install -g doctoc
 
 doctoc:
