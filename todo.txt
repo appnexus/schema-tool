@@ -1,0 +1,33 @@
+Things To Do in Rewrite
+-----------------------
+
+TODO: Convert revision-history to an append-only log (may require compacting tools in dev)
+TODO: Create initial SQL file via `init` command
+TODO: Provide `--json` objection for more integration-friendly version (may tie into server)
+TODO:
+
+FIXME: pre-commit hook - doesn't work on all platforms
+FIXME:
+
+IDEA: experimental command
+Implement experimental ideas under the "exp" command as sub-commands. For example,
+to launch the API server (next idea) would look like `schema exp server --server-opts`.
+Once a command works out here, it can be moved out with the general commands. It
+_could_ make sense to group "dba" commands with this arrangement as well.
+
+IDEA: schema-api
+I think there are a lot of neat things that could be done with the schema-tool if
+it were to act like a server/daemon that exposed a JSON API to control such as
+Jenkins integrations (plugins), UI, directory-watch (and run new), etc.
+
+IDEA: ad-hoc SQL support
+Things get run ad-hoc, and that probably can't be helped. How cool would it be
+though if this "ad-hoc" SQL were somehow tracked in the revision-history
+table?
+
+IDEA: docker support
+It would neat if the schema-tool could apply alters to a Docker container (the
+result of which would be an image/dockerfile?). This could be done fairly
+easily with a contrib/ script (like the pre-commit-hook). We could even
+get fancy enough to add a command to install the contrib scripts (if that makes
+sense).

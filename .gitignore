@@ -1,2 +1,7 @@
-*.pyc
+# Editor Files
+tags
 *.swp
+
+# Build files
+schema
+coverage.txt
