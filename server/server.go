@@ -38,7 +38,7 @@ type Config struct {
 // needed by the handlers.
 type httpServer struct {
 	config *Config
-	port   int
+	// 	port   int
 }
 
 // Start starts an HTTP server. This server does not return until the

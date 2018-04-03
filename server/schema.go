@@ -28,9 +28,9 @@ type createSchema struct {
 }
 
 // createdSchema is the JSON representation to return the ID of the created schema
-type createdSchema struct {
-	ID string `json:"id"`
-}
+// type createdSchema struct {
+// 	ID string `json:"id"`
+// }
 
 // newSchemaHandler accepts a `createSchema` struct and scans the directory on the
 // host the server is running on and creates an in-memory representation of the
