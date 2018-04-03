@@ -266,6 +266,9 @@ func ScanDirectory(dir string) (map[string]*AlterGroup, error) {
 
 	alters := make(map[string]*AlterGroup)
 	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
 	for _, f := range files {
 		if f.IsDir() {
 			// only process top-level of dir
@@ -351,11 +354,7 @@ comment lines that may follow.`)
 		}
 	}
 
-	if err = scanner.Err(); err != nil {
-		return lines, err
-	}
-
-	return lines, nil
+	return lines, scanner.Err()
 }
 
 // Parse the meta-information from the file and return an Alter object.
