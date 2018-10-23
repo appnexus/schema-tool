@@ -52,7 +52,7 @@ def main():
         "  down        Roll back to a particular revision",
         "  rebuild     Run the entire database down and back up (hard refresh)",
         "  gen-ref     Generate new file-ref",
-        "  gen-sql     Generate SQL for a given reference, including revision-history alter(s)",
+        "  gen-sql     Generate SQL (DBA Files) for a given reference, including revision-history alter(s)",
         "  resolve     Resolve a divergent-branch conflict (found by 'check' command)",
         "  init        Initialize new project",
         "  version     Shows current version of tool",
