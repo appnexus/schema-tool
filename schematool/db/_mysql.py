@@ -89,7 +89,7 @@ class MySQLDb(Db):
 
     @classmethod
     def get_commit_history(cls):
-        return cls.execute('SELECT * FROM %s' % cls.full_table_name)
+        return cls.execute('SELECT id, alter_hash, ran_on FROM %s' % cls.full_table_name)
 
     @classmethod
     def append_commit(cls, ref):

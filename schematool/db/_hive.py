@@ -87,7 +87,7 @@ class HiveDb(Db):
     @classmethod
     def get_commit_history(cls):
         # Omit the placeholder row
-        return cls.execute('SELECT * FROM %s WHERE alter_hash != \'%s\'' %
+        return cls.execute('SELECT id, alter_hash, ran_on FROM %s WHERE alter_hash != \'%s\'' %
             (cls.full_table_name, cls.DUMMY_ALTER_REF))
 
     @classmethod
