@@ -57,7 +57,7 @@ class VerticaDb(Db):
                 cursor.execute(query)
             results = []
 
-            if cursor.rowcount > 0:
+            if cursor.rowcount > 0 or cursor.rowcount == -1:
                 try:
                     results = cursor.fetchall()
                 except vertica_python.ProgrammingError, e:
@@ -81,8 +81,8 @@ class VerticaDb(Db):
         #
         # The 'IF NOT EXISTS' flag is still used in case the database is
         # created after the existence check but before the CREATE statement.
-        check = "SELECT EXISTS(SELECT 1 FROM v_catalog.SCHEMATA WHERE schema_name = %s)"
-        result = cls.execute(check, (cls.config['revision_schema_name'],))
+        check = "SELECT EXISTS(SELECT 1 FROM v_catalog.SCHEMATA WHERE schema_name = '%s')" % cls.config['revision_schema_name']
+        result = cls.execute(check)
         if result[0] == [True]:
             return
         else:
@@ -90,7 +90,7 @@ class VerticaDb(Db):
 
     @classmethod
     def get_commit_history(cls):
-        return cls.execute('SELECT id, alter_hash, ran_on FROM %s' % cls.full_table_name)
+        return cls.execute('SELECT * FROM %s' % cls.full_table_name)
 
     @classmethod
     def append_commit(cls, ref):
@@ -147,7 +147,7 @@ class VerticaDb(Db):
                 except KeyError:
                     pass
 
-            conn = vertica_python.connect(conn_driver_dict)
+            conn = vertica_python.connect(**conn_driver_dict)
         except Exception, e:
             raise DbError("Cannot connect to Vertica Db: %s\n"
                           "Ensure that the server is running and you can connect normally"
