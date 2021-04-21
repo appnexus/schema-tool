@@ -117,7 +117,7 @@ class VerticaDb(Db):
         alter_hash VARCHAR(100) NOT NULL,
         ran_on timestamp NOT NULL DEFAULT current_timestamp,
         CONSTRAINT pk_%s__id PRIMARY KEY (id),
-        CONSTRAINT uq_%s__alter_hash UNIQUE (alter_hash)
+        CONSTRAINT uq_%s__alter_hash UNIQUE (alter_hash) ENABLED
         )""" % (cls.full_table_name, cls.history_table_name, cls.history_table_name))
 
     @classmethod
