@@ -1,5 +1,8 @@
 # Schema Tool
 
+
+# WARNING  THIS CODE IS NO LONGER MAINTAINED AND SHOULD BE CONSIDERED DEPRECATED.
+
 [![Build Status](https://travis-ci.org/appnexus/schema-tool.svg)](https://travis-ci.org/appnexus/schema-tool)
 [![Code Health](https://landscape.io/github/appnexus/schema-tool/master/landscape.svg?style=flat)](https://landscape.io/github/appnexus/schema-tool/master)
 
